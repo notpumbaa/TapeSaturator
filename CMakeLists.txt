@@ -56,6 +56,7 @@ set(TAPESAT_SOURCES
     Source/Parameters.cpp
     Source/dsp/TapeEngine.cpp
     Source/ui/TapeLookAndFeel.cpp
+    Source/ui/VUMeter.cpp
 )
 
 set(TAPESAT_DEFINITIONS

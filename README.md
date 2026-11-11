@@ -2,7 +2,11 @@
 
 Eigenständige Bandmaschinen-Emulation als **VST3 / AU / Standalone** (JUCE 8, CMake).
 Für den Einsatz auf Bus und Master: Bandsättigung mit echter Hysterese, Head Bump,
-Wow & Flutter, Bandrauschen und Slap-Delay.
+Wow & Flutter, Bandrauschen und Slap-Delay – im Look einer klassischen Studio-Bandmaschine
+(animierte Spulen, VU-Meter, Chicken-Head-Knöpfe, Kippschalter).
+
+Bedienung: Knöpfe ziehen (hoch/runter), **Doppelklick** = Standardwert, Wert wird beim Ziehen/Überfahren angezeigt.
+VU-Meter: 0 VU = -18 dBFS RMS.
 
 ![Oberfläche](docs/screenshot.png)
 
@@ -87,7 +91,9 @@ Source/
   Parameters.*          Parameter-Definitionen (IDs, Bereiche)
   dsp/Hysteresis.h      Jiles-Atherton-Bandmodell (RK4)
   dsp/TapeEngine.*      komplette Signalkette
-  ui/TapeLookAndFeel.*  Optik (Knöpfe, Farben)
+  ui/TapeLookAndFeel.*  Optik (Chicken-Head-Knöpfe, Kippschalter, gebürstetes Metall)
+  ui/VUMeter.*          analoges VU-Meter mit Ballistik
+  ui/TapeReel.h         animierte Tonbandspule
 tests/TestMain.cpp      DSP-Tests, Offline-Renderer, UI-Snapshot
 .github/workflows/      CI für macOS + Windows inkl. auval / pluginval
 ```

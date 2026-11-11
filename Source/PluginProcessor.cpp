@@ -41,6 +41,9 @@ TapeParams TapeSaturatorAudioProcessor::readParams() const
 
 void TapeSaturatorAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
+    currentSampleRate = sampleRate;
+    inputMeanSq = 0.0f;
+    outputMeanSq = 0.0f;
     engine.setParameters (readParams());
     engine.prepare (sampleRate, samplesPerBlock, juce::jmax (1, getTotalNumOutputChannels()));
     setLatencySamples (engine.getLatencySamples());
@@ -62,8 +65,34 @@ void TapeSaturatorAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     for (int ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear (ch, 0, buffer.getNumSamples());
 
+    updateMeter (inputMeanSq, buffer);
     engine.setParameters (readParams());
     engine.process (buffer);
+    updateMeter (outputMeanSq, buffer);
+    blockCounter.fetch_add (1, std::memory_order_relaxed);
+}
+
+void TapeSaturatorAudioProcessor::updateMeter (std::atomic<float>& meanSq, const juce::AudioBuffer<float>& buffer)
+{
+    const int n = buffer.getNumSamples();
+    const int chans = buffer.getNumChannels();
+    if (n == 0 || chans == 0)
+        return;
+
+    double sum = 0.0;
+    for (int ch = 0; ch < chans; ++ch)
+    {
+        const float* d = buffer.getReadPointer (ch);
+        for (int i = 0; i < n; ++i)
+            sum += (double) d[i] * d[i];
+    }
+    const float blockMeanSq = (float) (sum / (double) (n * chans));
+
+    // Glättung mit ~50 ms Zeitkonstante, unabhängig von der Blockgröße
+    const float coef = 1.0f - std::exp (-(float) n / (float) (0.05 * currentSampleRate));
+    const float prev = meanSq.load (std::memory_order_relaxed);
+    const float next = prev + coef * (blockMeanSq - prev);
+    meanSq.store (std::isfinite (next) ? next : 0.0f, std::memory_order_relaxed);
 }
 
 juce::AudioProcessorEditor* TapeSaturatorAudioProcessor::createEditor()

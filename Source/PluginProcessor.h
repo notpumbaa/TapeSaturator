@@ -39,8 +39,21 @@ public:
     /** Aktuelle Parameter als DSP-Struktur (auch für Tests nützlich). */
     TapeParams readParams() const;
 
+    /** Geglätteter RMS-Pegel (linear) für die VU-Meter. */
+    float getInputLevel() const noexcept  { return std::sqrt (inputMeanSq.load()); }
+    float getOutputLevel() const noexcept { return std::sqrt (outputMeanSq.load()); }
+
+    /** Zählt verarbeitete Blöcke – die UI lässt die Spulen nur bei laufendem Audio drehen. */
+    juce::uint32 getProcessedBlockCount() const noexcept { return blockCounter.load(); }
+
 private:
     TapeEngine engine;
+
+    void updateMeter (std::atomic<float>& meanSq, const juce::AudioBuffer<float>& buffer);
+
+    std::atomic<float> inputMeanSq { 0.0f }, outputMeanSq { 0.0f };
+    std::atomic<juce::uint32> blockCounter { 0 };
+    double currentSampleRate = 44100.0;
 
     std::atomic<float>* pInput      = nullptr;
     std::atomic<float>* pSaturation = nullptr;
