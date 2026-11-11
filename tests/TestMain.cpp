@@ -267,15 +267,28 @@ int main (int argc, char* argv[])
 
         TapeSaturatorAudioProcessor proc;
         std::unique_ptr<juce::AudioProcessorEditor> editor (proc.createEditor());
-        const auto img = editor->createComponentSnapshot (editor->getLocalBounds(), true, 2.0f);
-        juce::File file = juce::File::getCurrentWorkingDirectory().getChildFile (argv[i + 1]);
-        file.deleteFile();
-        if (auto os = file.createOutputStream())
+        auto* tapeEditor = dynamic_cast<TapeSaturatorAudioProcessorEditor*> (editor.get());
+        if (tapeEditor != nullptr)
+            tapeEditor->getMachine().setDemoState (0.35f, 0.66f, 0.72f);
+
+        auto save = [] (const juce::Image& img, const juce::File& file)
         {
-            juce::PNGImageFormat png;
-            png.writeImageToStream (img, *os);
-        }
-        std::cout << "  Screenshot: " << file.getFullPathName() << std::endl;
+            file.deleteFile();
+            if (auto os = file.createOutputStream())
+            {
+                juce::PNGImageFormat png;
+                png.writeImageToStream (img, *os);
+            }
+            std::cout << "  Screenshot: " << file.getFullPathName() << std::endl;
+        };
+
+        juce::File file = juce::File::getCurrentWorkingDirectory().getChildFile (argv[i + 1]);
+        save (editor->createComponentSnapshot (editor->getLocalBounds(), true, 2.0f), file);
+
+        // Skalierung prüfen: 75 % Fenstergröße
+        editor->setSize (editor->getWidth() * 3 / 4, editor->getHeight() * 3 / 4);
+        save (editor->createComponentSnapshot (editor->getLocalBounds(), true, 1.0f),
+              file.getSiblingFile (file.getFileNameWithoutExtension() + "_75" + file.getFileExtension()));
     }
 
     // Optional: Hörbeispiele rendern

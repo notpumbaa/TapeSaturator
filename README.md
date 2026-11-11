@@ -2,8 +2,11 @@
 
 Eigenständige Bandmaschinen-Emulation als **VST3 / AU / Standalone** (JUCE 8, CMake).
 Für den Einsatz auf Bus und Master: Bandsättigung mit echter Hysterese, Head Bump,
-Wow & Flutter, Bandrauschen und Slap-Delay – im Look einer klassischen Studio-Bandmaschine
-(animierte Spulen, VU-Meter, Chicken-Head-Knöpfe, Kippschalter).
+Wow & Flutter, Bandrauschen und Slap-Delay – im Look einer klassischen Studio-Bandmaschine:
+animierte Spulen mit mitwachsendem Bandwickel, federnde Bandzugarme, beleuchtete VU-Meter mit Glasreflex,
+Chicken-Head-Knöpfe, Kippschalter, gebürstetes Aluminium und Nussbaum-Seitenteile.
+
+**Fenstergröße:** an der Ecke unten rechts ziehen (60–200 %); die Größe wird mit dem Projekt gespeichert.
 
 Bedienung: Knöpfe ziehen (hoch/runter), **Doppelklick** = Standardwert, Wert wird beim Ziehen/Überfahren angezeigt.
 VU-Meter: 0 VU = -18 dBFS RMS.
@@ -159,12 +162,17 @@ Source/
   dsp/TapeEngine.*      komplette Signalkette
   ui/TapeLookAndFeel.*  Optik (Chicken-Head-Knöpfe, Kippschalter, gebürstetes Metall)
   ui/VUMeter.*          analoges VU-Meter mit Ballistik
-  ui/TapeReel.h         animierte Tonbandspule
+  ui/TapeReel.h         Tonbandspule mit Bandwickel
+  ui/TapeMachine.*      komplette Oberfläche + Laufwerksmechanik (Anlauf, Bandzugarme)
+  ui/Fonts.*            eingebettete Schriften
 tests/TestMain.cpp      DSP-Tests, Offline-Renderer, UI-Snapshot
 .github/workflows/      CI für macOS + Windows inkl. auval / pluginval
 ```
 
 ## Lizenz-Hinweis
+
+Eingebettete Schriften: *Barlow Condensed* und *Playfair Display SC*, beide unter der SIL Open Font License
+(siehe `Resources/fonts/OFL-*.txt`).
 
 JUCE ist unter AGPLv3 bzw. kommerzieller Lizenz verfügbar. Für privaten Gebrauch unkritisch;
 vor einer Weitergabe/einem Verkauf die passende JUCE-Lizenz prüfen.

@@ -57,6 +57,8 @@ set(TAPESAT_SOURCES
     Source/dsp/TapeEngine.cpp
     Source/ui/TapeLookAndFeel.cpp
     Source/ui/VUMeter.cpp
+    Source/ui/Fonts.cpp
+    Source/ui/TapeMachine.cpp
 )
 
 set(TAPESAT_DEFINITIONS
@@ -65,7 +67,18 @@ set(TAPESAT_DEFINITIONS
     JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
+# Eingebettete Schriften (SIL Open Font License, siehe Resources/fonts/OFL-*.txt)
+juce_add_binary_data(TapeSaturatorAssets
+    NAMESPACE TapeAssets
+    SOURCES
+        Resources/fonts/BarlowCondensed-SemiBold.ttf
+        Resources/fonts/BarlowCondensed-Medium.ttf
+        Resources/fonts/PlayfairDisplaySC-Black.ttf
+)
+set_target_properties(TapeSaturatorAssets PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 set(TAPESAT_LIBS
+    TapeSaturatorAssets
     juce::juce_audio_utils
     juce::juce_dsp
 )
