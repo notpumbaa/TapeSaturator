@@ -3,7 +3,20 @@ name: Build
 on:
   push:
   pull_request:
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release-Tag, an das die ZIPs angehängt werden (leer = nur bauen)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -59,6 +72,12 @@ jobs:
           name: TapeSaturator-macOS
           path: dist/*.zip
 
+      - name: An Release anhängen
+        if: env.RELEASE_TAG != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" dist/*.zip --clobber --repo "$GITHUB_REPOSITORY"
+
   windows:
     name: Windows (VST3)
     runs-on: windows-latest
@@ -94,3 +113,10 @@ jobs:
         with:
           name: TapeSaturator-Windows
           path: dist/*.zip
+
+      - name: An Release anhängen
+        if: env.RELEASE_TAG != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" dist/*.zip --clobber --repo "$GITHUB_REPOSITORY"

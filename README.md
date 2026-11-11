@@ -103,6 +103,8 @@ Die Werte sind Startpunkte, bitte nach Gehör nachjustieren.
 
 ## Builds herunterladen
 
+Fertige Versionen: **[Releases](https://github.com/notpumbaa/TapeSaturator/releases)** (ZIPs werden beim Veröffentlichen eines Releases automatisch angehängt).
+
 Jeder Push baut automatisch über **GitHub Actions** (Reiter *Actions* → letzter Lauf → *Artifacts*):
 
 - `TapeSaturator-macOS`: AU, VST3, Standalone (Universal: Apple Silicon + Intel)
