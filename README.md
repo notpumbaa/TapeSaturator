@@ -165,10 +165,25 @@ tests/TestMain.cpp      DSP tests, offline renderer, UI snapshot
 .github/workflows/      CI for macOS + Windows incl. auval / pluginval
 ```
 
-## Licensing notes
+## License
 
-Embedded fonts: *Barlow Condensed* and *Playfair Display SC*, both under the SIL Open Font License
-(see `Resources/fonts/OFL-*.txt`).
+Copyright (C) 2026 notpumbaa
 
-JUCE is available under AGPLv3 or a commercial license. That's fine for personal use; check which
-JUCE license you need before distributing or selling the plugin.
+TapeSaturator is free software, licensed under the **GNU Affero General Public License v3.0** (AGPL-3.0).
+See [`LICENSE`](LICENSE) for the full text.
+
+In short: you may use, study, modify and share it. If you distribute it, or a modified version of it,
+you must make the complete source code available under the same license.
+
+Third-party components:
+
+- **JUCE** (https://juce.com) is used under its AGPLv3 option.
+- **Fonts:** *Barlow Condensed* and *Playfair Display SC*, both under the SIL Open Font License 1.1
+  (see `Resources/fonts/OFL-*.txt`).
+
+VST is a registered trademark of Steinberg Media Technologies GmbH. Audio Units is a trademark of Apple Inc.
+TapeSaturator is an independent project and is not affiliated with or endorsed by any tape machine or plugin manufacturer.
+
+## Security
+
+Please report security issues privately, see [`SECURITY.md`](SECURITY.md).
