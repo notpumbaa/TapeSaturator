@@ -68,7 +68,7 @@ jobs:
           ditto -c -k --keepParent "$ART/AU/TapeSaturator.component"   dist/TapeSaturator-macOS-AU.zip
           ditto -c -k --keepParent "$ART/Standalone/TapeSaturator.app" dist/TapeSaturator-macOS-Standalone.zip
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: TapeSaturator-macOS
           path: dist/*.zip
@@ -110,7 +110,7 @@ jobs:
           Compress-Archive -Path build/TapeSaturator_artefacts/Release/VST3/TapeSaturator.vst3 -DestinationPath dist/TapeSaturator-Windows-VST3.zip
           Compress-Archive -Path build/TapeSaturator_artefacts/Release/Standalone/TapeSaturator.exe -DestinationPath dist/TapeSaturator-Windows-Standalone.zip
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: TapeSaturator-Windows
           path: dist/*.zip
