@@ -1,137 +1,133 @@
 # TapeSaturator
 
-Eigenständige Bandmaschinen-Emulation als **VST3 / AU / Standalone** (JUCE 8, CMake).
-Für den Einsatz auf Bus und Master: Bandsättigung mit echter Hysterese, Head Bump,
-Wow & Flutter, Bandrauschen und Slap-Delay – im Look einer klassischen Studio-Bandmaschine:
-animierte Spulen mit mitwachsendem Bandwickel, federnde Bandzugarme, beleuchtete VU-Meter mit Glasreflex,
-Chicken-Head-Knöpfe, Kippschalter, gebürstetes Aluminium und Nussbaum-Seitenteile.
+A standalone tape machine emulation as **VST3 / AU / Standalone** (JUCE 8, CMake).
+Made for buses and the master: tape saturation with real magnetic hysteresis, head bump,
+wow & flutter, tape hiss and slap delay, all inside the look of a classic studio tape machine.
+The UI has animated reels whose tape pack moves from one reel to the other, springy tension arms,
+backlit VU meters behind glass, chicken-head knobs, toggle switches, brushed aluminium and walnut side panels.
 
-**Fenstergröße:** an der Ecke unten rechts ziehen (60–200 %); die Größe wird mit dem Projekt gespeichert.
+![TapeSaturator user interface](docs/screenshot.png)
 
-Bedienung: Knöpfe ziehen (hoch/runter), **Doppelklick** = Standardwert, Wert wird beim Ziehen/Überfahren angezeigt.
-VU-Meter: 0 VU = -18 dBFS RMS.
+**Window size:** drag the bottom-right corner (60–200 %). The size is saved with your project.
 
-![Oberfläche](docs/screenshot.png)
-
-## Signalkette
+## Signal flow
 
 ```
-Input ─► Record-EQ ─► [4x Oversampling: Hysterese (Jiles-Atherton)] ─► Playback-EQ
-      ─► Speed-EQ (Head Bump, HF-Rolloff, Bias-Tilt) ─► Wow & Flutter ─► Slap-Delay
-      ─► Bandrauschen ─► Output / Auto Gain ─► Dry/Wet (latenzkompensiert)
+Input ─► Record EQ ─► [4x oversampling: hysteresis (Jiles-Atherton)] ─► Playback EQ
+      ─► Speed EQ (head bump, HF roll-off, bias tilt) ─► Wow & Flutter ─► Slap delay
+      ─► Tape hiss ─► Output / Auto Gain ─► Dry/Wet (latency-compensated)
 ```
 
-## Was das Plugin macht
+## What the plugin does
 
-TapeSaturator simuliert, was mit einem Signal passiert, wenn es auf eine Studio-Bandmaschine aufgenommen
-und wieder abgespielt wird:
+TapeSaturator simulates what happens to a signal when it is recorded to a studio tape machine
+and played back:
 
-1. **Bandsättigung:** Das Herzstück. Je lauter das Signal aufs Band geht, desto mehr wird es weich komprimiert
-   und angedickt, und es entstehen warme Obertöne. Spitzen werden abgerundet statt hart abgeschnitten.
-2. **Bandgeschwindigkeits-EQ:** Leichte Bass-Anhebung („Head Bump“), darüber eine kleine Senke,
-   sanfter Höhenabfall.
-3. **Wow & Flutter:** Kleine Gleichlaufschwankungen des Bandes (minimale Tonhöhen-Bewegung).
-4. **Bandrauschen:** Leises Rauschen (Hiss), optional.
-5. **Slap-Delay:** Bandecho im Stil der 50er/60er.
-6. **Output und Dry/Wet:** Ausgangspegel und Parallel-Mischung mit dem Originalsignal.
+1. **Tape saturation:** The core of the plugin. The hotter the signal hits the tape, the more it gets
+   gently compressed and thickened, and warm harmonics appear. Peaks are rounded off instead of hard-clipped.
+2. **Tape speed EQ:** A slight low-end lift ("head bump"), a small dip above it and a gentle high-frequency roll-off.
+3. **Wow & flutter:** Small speed fluctuations of the tape (subtle pitch movement).
+4. **Tape hiss:** Quiet background noise, optional.
+5. **Slap delay:** Tape echo in the style of the '50s and '60s.
+6. **Output and Dry/Wet:** Output level and parallel blend with the original signal.
 
-## Die Regler
+## Controls
 
 ### TAPE
-| Regler | Bereich | Was er tut | Tipp |
+| Control | Range | What it does | Tip |
 |---|---|---|---|
-| **INPUT** | ±18 dB | Wie laut das Signal aufs Band geht. **Der wichtigste Regler für die Sättigung.** | Mehr Input = mehr Farbe und Kompression. |
-| **SATURATION** | 0–100 % | Wie früh das Band in die Sättigung geht. | 30–50 % dezent, 70–100 % deutlich. |
-| **BIAS** | 0–100 % | Unter 50 %: heller, rauer, mehr Verzerrung. Über 50 %: dunkler, weicher, sauberer. | Bei 50 % beginnen. |
-| **SPEED** | 7.5 / 15 ips | **15 ips:** offener, präziser, Bass-Anhebung um 90 Hz. **7.5 ips:** wärmer, Bass-Anhebung um 50 Hz, Höhen ab ca. 13 kHz gedämpft, etwas mehr Rauschen. | Master meist 15 ips, Vintage-Charakter 7.5 ips. |
+| **INPUT** | ±18 dB | How hard the signal hits the tape. **The most important control for saturation.** | More input = more colour and compression. |
+| **SATURATION** | 0–100 % | How early the tape starts to saturate. | 30–50 % subtle, 70–100 % obvious. |
+| **BIAS** | 0–100 % | Below 50 %: brighter, grittier, more distortion. Above 50 %: darker, softer, cleaner. | Start at 50 %. |
+| **SPEED** | 7.5 / 15 ips | **15 ips:** more open and precise, low-end lift around 90 Hz. **7.5 ips:** warmer, low-end lift around 50 Hz, highs rolled off from about 13 kHz, slightly more hiss. | Master: usually 15 ips. Vintage character: 7.5 ips. |
 
 ### TRANSPORT
-| Regler | Bereich | Was er tut | Tipp |
+| Control | Range | What it does | Tip |
 |---|---|---|---|
-| **WOW/FLUTTER** | 0–100 % | Tonhöhenschwankungen (bis 0,25 % Wow, 0,08 % Flutter). | **Auf dem Master 0–10 %**, sonst schwimmen Bass und Gesang. Standard (20 %) ist für den Master eher zu viel. |
-| **NOISE** | aus … -50 dBFS | Bandrauschen. | Auf dem Master meist aus. |
+| **WOW/FLUTTER** | 0–100 % | Pitch fluctuation (up to 0.25 % wow, 0.08 % flutter). | **0–10 % on the master**, otherwise bass and vocals start to waver. The default (20 %) is a bit much for the master. |
+| **NOISE** | off … -50 dBFS | Tape hiss. | Usually off on the master. |
 
 ### SLAP DELAY
-| Regler | Bereich | Was er tut | Tipp |
+| Control | Range | What it does | Tip |
 |---|---|---|---|
-| **TIME** | 30–800 ms | Echozeit. Beim Drehen verändert sich kurz die Tonhöhe, wie bei echtem Band. | Klassischer Slapback: 80–140 ms. |
-| **FEEDBACK** | 0–90 % | Anzahl der Wiederholungen, jede wird dumpfer. | 0–30 % Slapback, mehr für Dub-Echos. |
-| **MIX** | 0–100 % | Lautstärke des Echos; 0 % = Delay aus. | **Auf dem Master immer 0 %.** |
+| **TIME** | 30–800 ms | Echo time. Turning it bends the pitch briefly, like real tape. | Classic slapback: 80–140 ms. |
+| **FEEDBACK** | 0–90 % | Number of repeats; each one gets darker. | 0–30 % for slapback, more for dub echoes. |
+| **MIX** | 0–100 % | Echo level; 0 % = delay off. | **Always 0 % on the master.** |
 
 ### OUTPUT
-| Regler | Bereich | Was er tut | Tipp |
+| Control | Range | What it does | Tip |
 |---|---|---|---|
-| **OUTPUT** | ±18 dB | Ausgangspegel. | Zum Pegelangleich für fairen A/B-Vergleich. |
-| **DRY/WET** | 0–100 % | Mischung mit dem unbearbeiteten Signal (latenzkompensiert). | 50–80 % = Parallel-Sättigung, Transienten bleiben erhalten. |
-| **AUTO GAIN** | an/aus | Gleicht den Input-Regler am Ausgang automatisch aus. | **Anlassen**, dann hörst du die echte Klangänderung statt nur „lauter“. |
+| **OUTPUT** | ±18 dB | Output level. | Use it to level-match for a fair A/B comparison. |
+| **DRY/WET** | 0–100 % | Blend with the unprocessed signal (latency-compensated). | 50–80 % = parallel saturation, transients stay intact. |
+| **AUTO GAIN** | on/off | Automatically compensates the INPUT control at the output. | **Leave it on**, so you hear the actual change in tone rather than just "louder". |
 
-**Bedienung:** Knopf ziehen = Wert ändern, **Doppelklick = Standardwert**. Der genaue Wert erscheint beim
-Ziehen oder Darüberfahren.
+**Handling:** drag a knob to change its value, **double-click to reset it to the default**. The exact value
+shows up while dragging or hovering.
 
-## Die VU-Meter
+## The VU meters
 
-- **0 VU entspricht -18 dBFS** (Durchschnittspegel, nicht Spitzenpegel).
-- Die Nadel ist absichtlich träge wie bei einem echten VU-Meter und zeigt die „gefühlte“ Lautstärke.
-- **Input um 0 VU:** sauberer Arbeitspunkt mit leichter Färbung.
-- **Input im roten Bereich (+1 bis +3):** deutlich hörbare Sättigung und Kompression.
+- **0 VU equals -18 dBFS** (average level, not peak level).
+- The needle is intentionally slow, like a real VU meter, and shows perceived loudness.
+- **Input around 0 VU:** clean operating point with a touch of colour.
+- **Input in the red (+1 to +3):** clearly audible saturation and compression.
 
-## So stellst du es ein
+## How to set it up
 
-1. **Neutral starten:** Wow/Flutter 0 %, Noise 0 %, Delay Mix 0 %, Auto Gain an.
-2. **Input einpegeln:** INPUT so einstellen, dass das linke VU-Meter in lauten Passagen um **0 VU** pendelt.
-3. **Farbe dosieren:** SATURATION langsam erhöhen, bis es hörbar „zusammenklebt“, dann ein Stück zurück.
-4. **Charakter wählen:** SPEED und BIAS nach Geschmack: wärmer (7.5 ips, Bias höher) oder offener (15 ips, Bias 50 %).
-5. **Fair vergleichen:** Mit dem Bypass der DAW an/aus vergleichen und bei Bedarf mit OUTPUT auf gleiche
-   Lautheit bringen. Lauter klingt immer „besser“ und täuscht.
-6. **Zu viel Sättigung?** Lieber DRY/WET etwas runter, statt die Sättigung komplett zu reduzieren.
+1. **Start neutral:** Wow/Flutter 0 %, Noise 0 %, Delay Mix 0 %, Auto Gain on.
+2. **Set the input level:** Adjust INPUT so the left VU meter hovers around **0 VU** during loud passages.
+3. **Dial in the colour:** Raise SATURATION slowly until things audibly "glue" together, then back off a little.
+4. **Choose the character:** Set SPEED and BIAS to taste: warmer (7.5 ips, higher bias) or more open (15 ips, bias 50 %).
+5. **Compare fairly:** Toggle your DAW's bypass and, if needed, use OUTPUT to match loudness.
+   Louder always sounds "better" and fools your ears.
+6. **Too much saturation?** Pull DRY/WET down a bit rather than removing the saturation completely.
 
-## Startpunkte
+## Starting points
 
-| Einsatz | Input | Saturation | Bias | Speed | Wow/Flutter | Noise | Delay Mix | Dry/Wet |
+| Use case | Input | Saturation | Bias | Speed | Wow/Flutter | Noise | Delay Mix | Dry/Wet |
 |---|---|---|---|---|---|---|---|---|
-| **Master (dezent)** | 0 dB | 30 % | 50 % | 15 ips | 0–5 % | 0 % | 0 % | 100 % |
-| **Mix-Bus / Gruppe** | +3 dB | 50 % | 50 % | 15 ips | 5 % | 0 % | 0 % | 100 % |
-| **Drums (Punch)** | +6 dB | 70 % | 40 % | 15 ips | 0 % | 0 % | 0 % | 60 % |
-| **Bass (Wärme)** | +3 dB | 60 % | 60 % | 7.5 ips | 0 % | 0 % | 0 % | 100 % |
-| **Vocals (Slapback)** | +2 dB | 40 % | 50 % | 15 ips | 10 % | 0 % | 25–40 % (Time 110 ms, Feedback 15 %) | 100 % |
-| **Lo-Fi / Vintage** | +9 dB | 90 % | 30 % | 7.5 ips | 50–70 % | 40–60 % | nach Geschmack | 100 % |
+| **Master (subtle)** | 0 dB | 30 % | 50 % | 15 ips | 0–5 % | 0 % | 0 % | 100 % |
+| **Mix bus / group** | +3 dB | 50 % | 50 % | 15 ips | 5 % | 0 % | 0 % | 100 % |
+| **Drums (punch)** | +6 dB | 70 % | 40 % | 15 ips | 0 % | 0 % | 0 % | 60 % |
+| **Bass (warmth)** | +3 dB | 60 % | 60 % | 7.5 ips | 0 % | 0 % | 0 % | 100 % |
+| **Vocals (slapback)** | +2 dB | 40 % | 50 % | 15 ips | 10 % | 0 % | 25–40 % (Time 110 ms, Feedback 15 %) | 100 % |
+| **Lo-fi / vintage** | +9 dB | 90 % | 30 % | 7.5 ips | 50–70 % | 40–60 % | to taste | 100 % |
 
-Die Werte sind Startpunkte, bitte nach Gehör nachjustieren.
+These are starting points; adjust by ear.
 
-### Auf dem Master
+### On the master
 
-- **Nach dem EQ, vor dem Limiter:** TapeSaturator gehört **vor** den finalen Limiter.
-- **Wenig ist mehr:** Oft reichen 1–2 dB „Kompression“ durch das Band. Der Effekt soll eher gefühlt als gehört werden.
-- **Latenz:** ca. 78 Samples @ 48 kHz (~1,6 ms). Das Plugin meldet sie der DAW, die gleicht sie automatisch aus.
+- **After EQ, before the limiter:** TapeSaturator belongs **before** your final limiter.
+- **Less is more:** 1–2 dB of tape "compression" is often enough. The effect should be felt more than heard.
+- **Latency:** about 78 samples at 48 kHz (~1.6 ms). The plugin reports it to the DAW, which compensates automatically.
 
-## Builds herunterladen
+## Downloads
 
-Fertige Versionen: **[Releases](https://github.com/notpumbaa/TapeSaturator/releases)** (ZIPs werden beim Veröffentlichen eines Releases automatisch angehängt).
+Release builds: **[Releases](https://github.com/notpumbaa/TapeSaturator/releases)** (ZIPs are attached automatically when a release is published).
 
-Jeder Push baut automatisch über **GitHub Actions** (Reiter *Actions* → letzter Lauf → *Artifacts*):
+Every push is also built by **GitHub Actions** (*Actions* tab → latest run → *Artifacts*):
 
 - `TapeSaturator-macOS`: AU, VST3, Standalone (Universal: Apple Silicon + Intel)
 - `TapeSaturator-Windows`: VST3, Standalone
 
-### Installation macOS
+### Installing on macOS
 
-1. ZIPs entpacken.
+1. Unzip the files.
 2. `TapeSaturator.component` → `~/Library/Audio/Plug-Ins/Components/`
    `TapeSaturator.vst3` → `~/Library/Audio/Plug-Ins/VST3/`
-3. Da die Builds nicht notarisiert sind, einmal im Terminal die Quarantäne entfernen:
+3. The builds are not notarized, so remove the quarantine flag once in Terminal:
    ```bash
    xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/Components/TapeSaturator.component ~/Library/Audio/Plug-Ins/VST3/TapeSaturator.vst3
    ```
-4. DAW neu starten (Logic: ggf. Plug-in-Manager → *Neu scannen*).
+4. Restart your DAW (Logic: if needed, Plug-in Manager → *Reset & Rescan*).
 
-### Installation Windows
+### Installing on Windows
 
-`TapeSaturator.vst3` nach `C:\Program Files\Common Files\VST3\` kopieren, DAW neu scannen lassen.
+Copy `TapeSaturator.vst3` to `C:\Program Files\Common Files\VST3\` and let your DAW rescan.
 
-## Selbst bauen
+## Building from source
 
-Voraussetzungen: CMake ≥ 3.22, C++20-Compiler (Xcode / Visual Studio 2022 / GCC/Clang).
-JUCE wird automatisch heruntergeladen.
+Requirements: CMake ≥ 3.22 and a C++20 compiler (Xcode / Visual Studio 2022 / GCC / Clang).
+JUCE is downloaded automatically.
 
 ```bash
 cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -139,40 +135,40 @@ cmake --build build --config Release --parallel
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-Option `-DTAPESAT_COPY_AFTER_BUILD=ON` kopiert die Plugins nach dem Build direkt in die Systemordner.
+The option `-DTAPESAT_COPY_AFTER_BUILD=ON` copies the plugins into the system plugin folders after building.
 
-### Tests & Hörbeispiele
+### Tests and audio examples
 
-`TapeSaturatorTests` prüft Pegelstabilität, Klirrverhalten (Saturation/Bias), Stabilität im Worst Case,
-latenzkompensiertes Dry/Wet und State-Speichern. Zusätzlich:
+`TapeSaturatorTests` checks level stability, distortion behaviour (saturation/bias), stability in the worst case,
+latency-compensated dry/wet and state save/restore. It can also:
 
 ```bash
-./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --render render   # WAV-Hörbeispiele
-./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --snapshot ui.png  # Screenshot der UI
+./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --render render   # render WAV examples
+./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --snapshot ui.png  # screenshot of the UI
 ```
 
-## Projektstruktur
+## Project structure
 
 ```
 Source/
-  PluginProcessor.*     Plugin-Hülle, Parameter → DSP
-  PluginEditor.*        Oberfläche
-  Parameters.*          Parameter-Definitionen (IDs, Bereiche)
-  dsp/Hysteresis.h      Jiles-Atherton-Bandmodell (RK4)
-  dsp/TapeEngine.*      komplette Signalkette
-  ui/TapeLookAndFeel.*  Optik (Chicken-Head-Knöpfe, Kippschalter, gebürstetes Metall)
-  ui/VUMeter.*          analoges VU-Meter mit Ballistik
-  ui/TapeReel.h         Tonbandspule mit Bandwickel
-  ui/TapeMachine.*      komplette Oberfläche + Laufwerksmechanik (Anlauf, Bandzugarme)
-  ui/Fonts.*            eingebettete Schriften
-tests/TestMain.cpp      DSP-Tests, Offline-Renderer, UI-Snapshot
-.github/workflows/      CI für macOS + Windows inkl. auval / pluginval
+  PluginProcessor.*     plugin wrapper, parameters → DSP
+  PluginEditor.*        editor window, scaling
+  Parameters.*          parameter definitions (IDs, ranges)
+  dsp/Hysteresis.h      Jiles-Atherton tape model (RK4)
+  dsp/TapeEngine.*      complete signal chain
+  ui/TapeLookAndFeel.*  look (chicken-head knobs, toggle switches, brushed metal, wood)
+  ui/VUMeter.*          analogue VU meter with ballistics
+  ui/TapeReel.h         tape reel with tape pack
+  ui/TapeMachine.*      complete UI + transport mechanics (spin-up, tension arms)
+  ui/Fonts.*            embedded fonts
+tests/TestMain.cpp      DSP tests, offline renderer, UI snapshot
+.github/workflows/      CI for macOS + Windows incl. auval / pluginval
 ```
 
-## Lizenz-Hinweis
+## Licensing notes
 
-Eingebettete Schriften: *Barlow Condensed* und *Playfair Display SC*, beide unter der SIL Open Font License
-(siehe `Resources/fonts/OFL-*.txt`).
+Embedded fonts: *Barlow Condensed* and *Playfair Display SC*, both under the SIL Open Font License
+(see `Resources/fonts/OFL-*.txt`).
 
-JUCE ist unter AGPLv3 bzw. kommerzieller Lizenz verfügbar. Für privaten Gebrauch unkritisch;
-vor einer Weitergabe/einem Verkauf die passende JUCE-Lizenz prüfen.
+JUCE is available under AGPLv3 or a commercial license. That's fine for personal use; check which
+JUCE license you need before distributing or selling the plugin.
