@@ -35,8 +35,8 @@ void TapeLookAndFeel::drawEngravedText (juce::Graphics& g, const juce::String& t
 
 juce::Image TapeLookAndFeel::createBrushedMetal (int width, int height, float scale)
 {
-    const int w = juce::jmax (1, (int) std::ceil (width * scale));
-    const int h = juce::jmax (1, (int) std::ceil (height * scale));
+    const int w = juce::jmax (1, (int) std::ceil ((float) width * scale));
+    const int h = juce::jmax (1, (int) std::ceil ((float) height * scale));
     juce::Image img (juce::Image::RGB, w, h, false);
     juce::Graphics g (img);
 
@@ -73,8 +73,8 @@ juce::Image TapeLookAndFeel::createBrushedMetal (int width, int height, float sc
 
 juce::Image TapeLookAndFeel::createWoodPanel (int width, int height, float scale, int seed)
 {
-    const int w = juce::jmax (1, (int) std::ceil (width * scale));
-    const int h = juce::jmax (1, (int) std::ceil (height * scale));
+    const int w = juce::jmax (1, (int) std::ceil ((float) width * scale));
+    const int h = juce::jmax (1, (int) std::ceil ((float) height * scale));
     juce::Image img (juce::Image::RGB, w, h, false);
     juce::Graphics g (img);
 
@@ -84,7 +84,7 @@ juce::Image TapeLookAndFeel::createWoodPanel (int width, int height, float scale
 
     // Maserung: senkrechte, leicht wellige Linien unterschiedlicher Stärke
     juce::Random rng (seed);
-    const int lines = (int) (w * 0.9f);
+    const int lines = (int) ((float) w * 0.9f);
     for (int i = 0; i < lines; ++i)
     {
         const float x0 = rng.nextFloat() * (float) w;

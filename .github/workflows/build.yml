@@ -2,6 +2,7 @@ name: Build
 
 on:
   push:
+    branches: ["**"]   # nur Branches – Tags werden über das Release-Event gebaut
   pull_request:
   release:
     types: [published]
@@ -27,7 +28,7 @@ jobs:
     name: macOS (AU + VST3, Universal)
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -67,7 +68,7 @@ jobs:
           ditto -c -k --keepParent "$ART/AU/TapeSaturator.component"   dist/TapeSaturator-macOS-AU.zip
           ditto -c -k --keepParent "$ART/Standalone/TapeSaturator.app" dist/TapeSaturator-macOS-Standalone.zip
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: TapeSaturator-macOS
           path: dist/*.zip
@@ -82,7 +83,7 @@ jobs:
     name: Windows (VST3)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Configure
         run: cmake -B build
@@ -109,7 +110,7 @@ jobs:
           Compress-Archive -Path build/TapeSaturator_artefacts/Release/VST3/TapeSaturator.vst3 -DestinationPath dist/TapeSaturator-Windows-VST3.zip
           Compress-Archive -Path build/TapeSaturator_artefacts/Release/Standalone/TapeSaturator.exe -DestinationPath dist/TapeSaturator-Windows-Standalone.zip
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: TapeSaturator-Windows
           path: dist/*.zip

@@ -70,7 +70,7 @@ void VUMeter::update (float rmsLinear, float dt, float jitter)
 void VUMeter::renderFace (float scale)
 {
     const int w = getWidth(), h = getHeight();
-    faceLayer = juce::Image (juce::Image::ARGB, juce::jmax (1, (int) std::ceil (w * scale)), juce::jmax (1, (int) std::ceil (h * scale)), true);
+    faceLayer = juce::Image (juce::Image::ARGB, juce::jmax (1, (int) std::ceil ((float) w * scale)), juce::jmax (1, (int) std::ceil ((float) h * scale)), true);
     juce::Graphics g (faceLayer);
     g.addTransform (juce::AffineTransform::scale (scale));
 
@@ -171,7 +171,7 @@ void VUMeter::renderFace (float scale)
 void VUMeter::renderGlass (float scale)
 {
     const int w = getWidth(), h = getHeight();
-    glassLayer = juce::Image (juce::Image::ARGB, juce::jmax (1, (int) std::ceil (w * scale)), juce::jmax (1, (int) std::ceil (h * scale)), true);
+    glassLayer = juce::Image (juce::Image::ARGB, juce::jmax (1, (int) std::ceil ((float) w * scale)), juce::jmax (1, (int) std::ceil ((float) h * scale)), true);
     juce::Graphics g (glassLayer);
     g.addTransform (juce::AffineTransform::scale (scale));
 

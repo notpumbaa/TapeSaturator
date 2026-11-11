@@ -24,7 +24,7 @@ public:
     float getPackRatio() const noexcept { return pack; }
 
     /** Radius des Spulenflanschs in Komponenten-Koordinaten. */
-    float getFlangeRadius() const noexcept { return juce::jmin (getWidth(), getHeight()) * 0.5f - 8.0f; }
+    float getFlangeRadius() const noexcept { return (float) juce::jmin (getWidth(), getHeight()) * 0.5f - 8.0f; }
 
     void paint (juce::Graphics& g) override
     {

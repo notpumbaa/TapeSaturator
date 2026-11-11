@@ -278,8 +278,8 @@ void TapeMachine::rebuildCaches (float scale)
 
     auto render = [scale] (juce::Rectangle<int> area, auto&& drawFn)
     {
-        juce::Image img (juce::Image::ARGB, juce::jmax (1, (int) std::ceil (area.getWidth() * scale)),
-                         juce::jmax (1, (int) std::ceil (area.getHeight() * scale)), true);
+        juce::Image img (juce::Image::ARGB, juce::jmax (1, (int) std::ceil ((float) area.getWidth() * scale)),
+                         juce::jmax (1, (int) std::ceil ((float) area.getHeight() * scale)), true);
         juce::Graphics g (img);
         g.addTransform (juce::AffineTransform::translation ((float) -area.getX(), (float) -area.getY()).scaled (scale));
         drawFn (g);

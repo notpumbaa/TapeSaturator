@@ -6,7 +6,7 @@ namespace
 }
 
 TapeSaturatorAudioProcessorEditor::TapeSaturatorAudioProcessorEditor (TapeSaturatorAudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p), machine (p.apvts)
+    : AudioProcessorEditor (&p), tapeProcessor (p), machine (p.apvts)
 {
     addAndMakeVisible (machine);
 
@@ -14,13 +14,13 @@ TapeSaturatorAudioProcessorEditor::TapeSaturatorAudioProcessorEditor (TapeSatura
 
     // Gespeicherte Größe lesen, bevor setResizeLimits() ein resized() auslöst
     const float savedScale = juce::jlimit (minScale, maxScale,
-                                           (float) (double) processor.apvts.state.getProperty (uiScaleId, 1.0));
+                                           (float) (double) tapeProcessor.apvts.state.getProperty (uiScaleId, 1.0));
     setResizable (true, true);
-    setResizeLimits ((int) (bw * minScale), (int) (bh * minScale), (int) (bw * maxScale), (int) (bh * maxScale));
+    setResizeLimits ((int) ((float) bw * minScale), (int) ((float) bh * minScale), (int) ((float) bw * maxScale), (int) ((float) bh * maxScale));
     if (auto* c = getConstrainer())
         c->setFixedAspectRatio ((double) bw / (double) bh);
 
-    setSize (juce::roundToInt (bw * savedScale), juce::roundToInt (bh * savedScale));
+    setSize (juce::roundToInt ((float) bw * savedScale), juce::roundToInt ((float) bh * savedScale));
     sizeRestored = true;
 
     startTimerHz (timerHz);
@@ -42,16 +42,16 @@ void TapeSaturatorAudioProcessorEditor::resized()
     machine.setBounds (0, 0, TapeMachine::kBaseWidth, TapeMachine::kBaseHeight);
     machine.setTransform (juce::AffineTransform::scale (scale));
     if (sizeRestored)
-        processor.apvts.state.setProperty (uiScaleId, scale, nullptr);
+        tapeProcessor.apvts.state.setProperty (uiScaleId, scale, nullptr);
 }
 
 void TapeSaturatorAudioProcessorEditor::timerCallback()
 {
     // Spulen laufen nur, wenn der Host tatsächlich Audio verarbeitet
-    const auto count = processor.getProcessedBlockCount();
+    const auto count = tapeProcessor.getProcessedBlockCount();
     idleTicks = (count != lastBlockCount) ? 0 : idleTicks + 1;
     lastBlockCount = count;
 
     machine.tick (1.0f / (float) timerHz, idleTicks < timerHz / 3,
-                  processor.getInputLevel(), processor.getOutputLevel());
+                  tapeProcessor.getInputLevel(), tapeProcessor.getOutputLevel());
 }

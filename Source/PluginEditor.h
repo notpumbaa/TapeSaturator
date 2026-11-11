@@ -24,7 +24,7 @@ public:
 private:
     void timerCallback() override;
 
-    TapeSaturatorAudioProcessor& processor;
+    TapeSaturatorAudioProcessor& tapeProcessor;
     TapeMachine machine;
 
     juce::uint32 lastBlockCount = 0;
