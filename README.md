@@ -18,24 +18,88 @@ Input ─► Record-EQ ─► [4x Oversampling: Hysterese (Jiles-Atherton)] ─�
       ─► Bandrauschen ─► Output / Auto Gain ─► Dry/Wet (latenzkompensiert)
 ```
 
-## Parameter
+## Was das Plugin macht
 
-| Sektion | Parameter | Bereich | Wirkung |
+TapeSaturator simuliert, was mit einem Signal passiert, wenn es auf eine Studio-Bandmaschine aufgenommen
+und wieder abgespielt wird:
+
+1. **Bandsättigung:** Das Herzstück. Je lauter das Signal aufs Band geht, desto mehr wird es weich komprimiert
+   und angedickt, und es entstehen warme Obertöne. Spitzen werden abgerundet statt hart abgeschnitten.
+2. **Bandgeschwindigkeits-EQ:** Leichte Bass-Anhebung („Head Bump“), darüber eine kleine Senke,
+   sanfter Höhenabfall.
+3. **Wow & Flutter:** Kleine Gleichlaufschwankungen des Bandes (minimale Tonhöhen-Bewegung).
+4. **Bandrauschen:** Leises Rauschen (Hiss), optional.
+5. **Slap-Delay:** Bandecho im Stil der 50er/60er.
+6. **Output und Dry/Wet:** Ausgangspegel und Parallel-Mischung mit dem Originalsignal.
+
+## Die Regler
+
+### TAPE
+| Regler | Bereich | Was er tut | Tipp |
 |---|---|---|---|
-| Tape | Input | ±18 dB | Pegel ins Band, mehr Pegel = mehr Sättigung |
-| | Saturation | 0–100 % | Wie stark das Band in die Sättigung geht |
-| | Bias | 0–100 % | <50 %: Unterbias (heller, mehr Klirr), >50 %: Überbias (dunkler, sauberer) |
-| | Speed | 7.5 / 15 ips | 7.5: mehr/tieferer Head Bump, früherer Höhenabfall, mehr Rauschen |
-| Transport | Wow/Flutter | 0–100 % | Tonhöhenschwankungen (bis 0,25 % Wow, 0,08 % Flutter) |
-| | Noise | 0–100 % | Bandrauschen (aus bis -50 dBFS) |
-| Slap Delay | Time | 30–800 ms | Echozeit (Änderungen gleiten wie bei Band) |
-| | Feedback | 0–90 % | Wiederholungen, im Loop gefiltert und gesättigt |
-| | Delay Mix | 0–100 % | Anteil des Echos |
-| Output | Output | ±18 dB | Ausgangspegel |
-| | Dry/Wet | 0–100 % | Parallel-Mischung, phasenrichtig |
-| | Auto Gain | an/aus | Gleicht den Input-Gain am Ausgang wieder aus |
+| **INPUT** | ±18 dB | Wie laut das Signal aufs Band geht. **Der wichtigste Regler für die Sättigung.** | Mehr Input = mehr Farbe und Kompression. |
+| **SATURATION** | 0–100 % | Wie früh das Band in die Sättigung geht. | 30–50 % dezent, 70–100 % deutlich. |
+| **BIAS** | 0–100 % | Unter 50 %: heller, rauer, mehr Verzerrung. Über 50 %: dunkler, weicher, sauberer. | Bei 50 % beginnen. |
+| **SPEED** | 7.5 / 15 ips | **15 ips:** offener, präziser, Bass-Anhebung um 90 Hz. **7.5 ips:** wärmer, Bass-Anhebung um 50 Hz, Höhen ab ca. 13 kHz gedämpft, etwas mehr Rauschen. | Master meist 15 ips, Vintage-Charakter 7.5 ips. |
 
-Latenz: ~78 Samples @ 48 kHz (wird dem Host gemeldet).
+### TRANSPORT
+| Regler | Bereich | Was er tut | Tipp |
+|---|---|---|---|
+| **WOW/FLUTTER** | 0–100 % | Tonhöhenschwankungen (bis 0,25 % Wow, 0,08 % Flutter). | **Auf dem Master 0–10 %**, sonst schwimmen Bass und Gesang. Standard (20 %) ist für den Master eher zu viel. |
+| **NOISE** | aus … -50 dBFS | Bandrauschen. | Auf dem Master meist aus. |
+
+### SLAP DELAY
+| Regler | Bereich | Was er tut | Tipp |
+|---|---|---|---|
+| **TIME** | 30–800 ms | Echozeit. Beim Drehen verändert sich kurz die Tonhöhe, wie bei echtem Band. | Klassischer Slapback: 80–140 ms. |
+| **FEEDBACK** | 0–90 % | Anzahl der Wiederholungen, jede wird dumpfer. | 0–30 % Slapback, mehr für Dub-Echos. |
+| **MIX** | 0–100 % | Lautstärke des Echos; 0 % = Delay aus. | **Auf dem Master immer 0 %.** |
+
+### OUTPUT
+| Regler | Bereich | Was er tut | Tipp |
+|---|---|---|---|
+| **OUTPUT** | ±18 dB | Ausgangspegel. | Zum Pegelangleich für fairen A/B-Vergleich. |
+| **DRY/WET** | 0–100 % | Mischung mit dem unbearbeiteten Signal (latenzkompensiert). | 50–80 % = Parallel-Sättigung, Transienten bleiben erhalten. |
+| **AUTO GAIN** | an/aus | Gleicht den Input-Regler am Ausgang automatisch aus. | **Anlassen**, dann hörst du die echte Klangänderung statt nur „lauter“. |
+
+**Bedienung:** Knopf ziehen = Wert ändern, **Doppelklick = Standardwert**. Der genaue Wert erscheint beim
+Ziehen oder Darüberfahren.
+
+## Die VU-Meter
+
+- **0 VU entspricht -18 dBFS** (Durchschnittspegel, nicht Spitzenpegel).
+- Die Nadel ist absichtlich träge wie bei einem echten VU-Meter und zeigt die „gefühlte“ Lautstärke.
+- **Input um 0 VU:** sauberer Arbeitspunkt mit leichter Färbung.
+- **Input im roten Bereich (+1 bis +3):** deutlich hörbare Sättigung und Kompression.
+
+## So stellst du es ein
+
+1. **Neutral starten:** Wow/Flutter 0 %, Noise 0 %, Delay Mix 0 %, Auto Gain an.
+2. **Input einpegeln:** INPUT so einstellen, dass das linke VU-Meter in lauten Passagen um **0 VU** pendelt.
+3. **Farbe dosieren:** SATURATION langsam erhöhen, bis es hörbar „zusammenklebt“, dann ein Stück zurück.
+4. **Charakter wählen:** SPEED und BIAS nach Geschmack: wärmer (7.5 ips, Bias höher) oder offener (15 ips, Bias 50 %).
+5. **Fair vergleichen:** Mit dem Bypass der DAW an/aus vergleichen und bei Bedarf mit OUTPUT auf gleiche
+   Lautheit bringen. Lauter klingt immer „besser“ und täuscht.
+6. **Zu viel Sättigung?** Lieber DRY/WET etwas runter, statt die Sättigung komplett zu reduzieren.
+
+## Startpunkte
+
+| Einsatz | Input | Saturation | Bias | Speed | Wow/Flutter | Noise | Delay Mix | Dry/Wet |
+|---|---|---|---|---|---|---|---|---|
+| **Master (dezent)** | 0 dB | 30 % | 50 % | 15 ips | 0–5 % | 0 % | 0 % | 100 % |
+| **Mix-Bus / Gruppe** | +3 dB | 50 % | 50 % | 15 ips | 5 % | 0 % | 0 % | 100 % |
+| **Drums (Punch)** | +6 dB | 70 % | 40 % | 15 ips | 0 % | 0 % | 0 % | 60 % |
+| **Bass (Wärme)** | +3 dB | 60 % | 60 % | 7.5 ips | 0 % | 0 % | 0 % | 100 % |
+| **Vocals (Slapback)** | +2 dB | 40 % | 50 % | 15 ips | 10 % | 0 % | 25–40 % (Time 110 ms, Feedback 15 %) | 100 % |
+| **Lo-Fi / Vintage** | +9 dB | 90 % | 30 % | 7.5 ips | 50–70 % | 40–60 % | nach Geschmack | 100 % |
+
+Die Werte sind Startpunkte, bitte nach Gehör nachjustieren.
+
+### Auf dem Master
+
+- **Nach dem EQ, vor dem Limiter:** TapeSaturator gehört **vor** den finalen Limiter.
+- **Wenig ist mehr:** Oft reichen 1–2 dB „Kompression“ durch das Band. Der Effekt soll eher gefühlt als gehört werden.
+- **Latenz:** ca. 78 Samples @ 48 kHz (~1,6 ms). Das Plugin meldet sie der DAW, die gleicht sie automatisch aus.
 
 ## Builds herunterladen
 
