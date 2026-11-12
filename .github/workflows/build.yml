@@ -57,6 +57,17 @@ jobs:
           codesign --force --deep --sign - "$ART/AU/TapeSaturator.component"
           codesign --force --deep --sign - "$ART/Standalone/TapeSaturator.app"
 
+      - name: Universal Binary prüfen (arm64 + x86_64)
+        run: |
+          ART=build/TapeSaturator_artefacts/Release
+          for bin in "$ART/VST3/TapeSaturator.vst3/Contents/MacOS/TapeSaturator" \
+                     "$ART/AU/TapeSaturator.component/Contents/MacOS/TapeSaturator" \
+                     "$ART/Standalone/TapeSaturator.app/Contents/MacOS/TapeSaturator"; do
+            archs="$(lipo -archs "$bin")"
+            echo "$bin: $archs"
+            [[ "$archs" == *arm64* && "$archs" == *x86_64* ]] || { echo "::error::$bin ist kein Universal Binary ($archs)"; exit 1; }
+          done
+
       - name: AU validieren (auval)
         run: |
           mkdir -p ~/Library/Audio/Plug-Ins/Components
