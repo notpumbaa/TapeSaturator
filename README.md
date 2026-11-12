@@ -1,4 +1,5 @@
 # TapeSaturator
+https://notpumbaa.de/plugins/tapesaturator
 
 A standalone tape machine emulation as **VST3 / AU / Standalone** (JUCE 8, CMake).
 Made for buses and the master: tape saturation with real magnetic hysteresis, head bump,
