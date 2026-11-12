@@ -60,13 +60,29 @@ jobs:
           ./pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --validate-in-process --skip-gui-tests \
             --validate build/TapeSaturator_artefacts/Release/VST3/TapeSaturator.vst3
 
-      - name: Paketieren
+      - name: Paketieren (inkl. Lizenzen)
         run: |
           ART=build/TapeSaturator_artefacts/Release
-          mkdir -p dist
-          ditto -c -k --keepParent "$ART/VST3/TapeSaturator.vst3"      dist/TapeSaturator-macOS-VST3.zip
-          ditto -c -k --keepParent "$ART/AU/TapeSaturator.component"   dist/TapeSaturator-macOS-AU.zip
-          ditto -c -k --keepParent "$ART/Standalone/TapeSaturator.app" dist/TapeSaturator-macOS-Standalone.zip
+          packaging/stage-docs.sh build/_deps/juce-src docs-stage "${RELEASE_TAG:-$GITHUB_SHA}"
+          mkdir -p dist stage
+          pack() {  # $1 = Plugin-Bundle, $2 = ZIP-Name ohne .zip
+            mkdir -p "stage/$2"
+            ditto "$1" "stage/$2/$(basename "$1")"
+            cp -R docs-stage/. "stage/$2/"
+            ditto -c -k --keepParent "stage/$2" "dist/$2.zip"
+          }
+          pack "$ART/VST3/TapeSaturator.vst3"      TapeSaturator-macOS-VST3
+          pack "$ART/AU/TapeSaturator.component"   TapeSaturator-macOS-AU
+          pack "$ART/Standalone/TapeSaturator.app" TapeSaturator-macOS-Standalone
+
+      - name: ZIP-Inhalt prüfen
+        run: |
+          for z in dist/*.zip; do
+            unzip -l "$z"
+            for f in LICENSE.txt README.txt THIRD-PARTY-NOTICES.txt third-party-licenses/JUCE-LICENSE.md; do
+              unzip -l "$z" | grep -q "/$f\$" || { echo "::error::$f fehlt in $z"; exit 1; }
+            done
+          done
 
       - uses: actions/upload-artifact@v7
         with:
@@ -103,12 +119,38 @@ jobs:
             --validate build/TapeSaturator_artefacts/Release/VST3/TapeSaturator.vst3
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      - name: Paketieren
+      - name: Lizenzen bereitstellen
+        shell: bash
+        run: packaging/stage-docs.sh build/_deps/juce-src docs-stage "${RELEASE_TAG:-$GITHUB_SHA}"
+
+      - name: Paketieren (inkl. Lizenzen)
         shell: pwsh
         run: |
+          $ART = "build/TapeSaturator_artefacts/Release"
           New-Item -ItemType Directory -Force dist | Out-Null
-          Compress-Archive -Path build/TapeSaturator_artefacts/Release/VST3/TapeSaturator.vst3 -DestinationPath dist/TapeSaturator-Windows-VST3.zip
-          Compress-Archive -Path build/TapeSaturator_artefacts/Release/Standalone/TapeSaturator.exe -DestinationPath dist/TapeSaturator-Windows-Standalone.zip
+          function Pack($item, $name) {
+            $dir = "stage/$name"
+            New-Item -ItemType Directory -Force $dir | Out-Null
+            Copy-Item -Recurse $item $dir
+            Copy-Item -Recurse docs-stage/* $dir
+            Compress-Archive -Path $dir -DestinationPath "dist/$name.zip"
+          }
+          Pack "$ART/VST3/TapeSaturator.vst3"           "TapeSaturator-Windows-VST3"
+          Pack "$ART/Standalone/TapeSaturator.exe"      "TapeSaturator-Windows-Standalone"
+
+      - name: ZIP-Inhalt prüfen
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          foreach ($z in Get-ChildItem dist/*.zip) {
+            $zip = [IO.Compression.ZipFile]::OpenRead($z.FullName)
+            $names = $zip.Entries | ForEach-Object { $_.FullName -replace '\\', '/' }
+            $zip.Dispose()
+            Write-Host "== $($z.Name)"; $names | ForEach-Object { Write-Host "  $_" }
+            foreach ($f in 'LICENSE.txt', 'README.txt', 'THIRD-PARTY-NOTICES.txt', 'third-party-licenses/JUCE-LICENSE.md') {
+              if (-not ($names | Where-Object { $_.EndsWith("/$f") })) { Write-Error "$f fehlt in $($z.Name)"; exit 1 }
+            }
+          }
 
       - uses: actions/upload-artifact@v7
         with:

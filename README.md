@@ -110,6 +110,9 @@ Every push is also built by **GitHub Actions** (*Actions* tab → latest run →
 - `TapeSaturator-macOS`: AU, VST3, Standalone (Universal: Apple Silicon + Intel)
 - `TapeSaturator-Windows`: VST3, Standalone
 
+Every ZIP contains the plugin together with `LICENSE.txt`, a short `README.txt` (installation and a link to
+the exact source code of that build), `THIRD-PARTY-NOTICES.txt` and the folder `third-party-licenses/`.
+
 ### Installing on macOS
 
 1. Unzip the files.
@@ -163,6 +166,7 @@ Source/
   ui/TapeMachine.*      complete UI + transport mechanics (spin-up, tension arms)
   ui/Fonts.*            embedded fonts
 tests/TestMain.cpp      DSP tests, offline renderer, UI snapshot
+packaging/              license/readme files bundled into every download ZIP
 .github/workflows/      CI for macOS + Windows incl. auval / pluginval
 ```
 
