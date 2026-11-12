@@ -1,9 +1,13 @@
 name: Build
 
 on:
+  # Push: nur main und Arbeits-Branches (Dependabot & Co. laufen über pull_request – kein Doppel-Build).
+  # Tags werden über das Release-Event bzw. den Release-Workflow gebaut.
   push:
-    branches: ["**"]   # nur Branches – Tags werden über das Release-Event gebaut
+    branches: [main, "claude/**"]
+    paths-ignore: ["**.md", "docs/**", "LICENSE", ".github/dependabot.yml"]
   pull_request:
+    paths-ignore: ["**.md", "docs/**", "LICENSE", ".github/dependabot.yml"]
   release:
     types: [published]
   workflow_dispatch:
@@ -24,14 +28,16 @@ permissions:
 env:
   RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   macos:
     name: macOS (AU + VST3, Universal)
     runs-on: macos-latest
+    timeout-minutes: 45
+    # Pro Branch/Release höchstens ein laufender + ein wartender Build je Plattform.
+    # Arbeits-Branches: neuer Push bricht den alten Build ab. main und Releases: wird zu Ende gebaut.
+    concurrency:
+      group: build-macos-${{ inputs.release_tag || github.event.release.tag_name || github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' && (inputs.release_tag || github.event.release.tag_name || '') == '' }}
     steps:
       - uses: actions/checkout@v7
 
@@ -103,6 +109,12 @@ jobs:
   windows:
     name: Windows (VST3)
     runs-on: windows-latest
+    timeout-minutes: 60
+    # Pro Branch/Release höchstens ein laufender + ein wartender Build je Plattform.
+    # Arbeits-Branches: neuer Push bricht den alten Build ab. main und Releases: wird zu Ende gebaut.
+    concurrency:
+      group: build-windows-${{ inputs.release_tag || github.event.release.tag_name || github.ref }}
+      cancel-in-progress: ${{ github.ref != 'refs/heads/main' && (inputs.release_tag || github.event.release.tag_name || '') == '' }}
     steps:
       - uses: actions/checkout@v7
 
