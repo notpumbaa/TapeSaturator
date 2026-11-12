@@ -31,7 +31,7 @@ env:
 jobs:
   macos:
     name: macOS (AU + VST3, Universal)
-    runs-on: macos-latest
+    runs-on: macos-15-intel   # arm64-Rechner sind bei GitHub häufig ausgelastet; baut trotzdem Universal (arm64 + x86_64)
     timeout-minutes: 45
     # Pro Branch/Release höchstens ein laufender + ein wartender Build je Plattform.
     # Arbeits-Branches: neuer Push bricht den alten Build ab. main und Releases: wird zu Ende gebaut.
