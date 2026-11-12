@@ -12,6 +12,11 @@ on:
         description: "Release-Tag, an das die ZIPs angehängt werden (leer = nur bauen)"
         required: false
         default: ""
+  workflow_call:          # wird vom Release-Workflow aufgerufen
+    inputs:
+      release_tag:
+        type: string
+        required: true
 
 permissions:
   contents: write

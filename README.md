@@ -128,6 +128,14 @@ the exact source code of that build), `THIRD-PARTY-NOTICES.txt` and the folder `
 
 Copy `TapeSaturator.vst3` to `C:\Program Files\Common Files\VST3\` and let your DAW rescan.
 
+## Making a release
+
+1. Raise the version in `CMakeLists.txt` (`project(TapeSaturator VERSION x.y.z ...)`) and merge it into `main`.
+2. On GitHub: **Actions → Release → Run workflow** (branch `main`), optionally with a short "what's new" text.
+
+The workflow creates the tag `vx.y.z` and the release, then builds macOS and Windows and attaches the ZIPs
+(about 20 minutes). It stops with an error if that version has already been released.
+
 ## Building from source
 
 Requirements: CMake ≥ 3.22 and a C++20 compiler (Xcode / Visual Studio 2022 / GCC / Clang).

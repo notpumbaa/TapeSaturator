@@ -1,0 +1,74 @@
+name: Release
+
+# Ein-Klick-Release: Actions → Release → Run workflow (auf main).
+# Liest die Version aus CMakeLists.txt, legt Tag + Release an und baut/hängt die ZIPs an.
+on:
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: "Was ist neu? (optional, Markdown; wird über die automatischen Release-Notes gesetzt)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  create:
+    name: Tag + Release anlegen
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Version aus CMakeLists.txt lesen
+        id: version
+        run: |
+          VERSION="$(sed -n 's/^project(TapeSaturator VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)"
+          [ -n "$VERSION" ] || { echo "::error::Version nicht gefunden"; exit 1; }
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version: $VERSION"
+
+      - name: Prüfen, dass die Version neu ist
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            echo "::error::$TAG existiert bereits. Erst die Version in CMakeLists.txt erhöhen."
+            exit 1
+          fi
+
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          {
+            if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES"; fi
+            echo "## Downloads"
+            echo
+            echo "- macOS (Universal: Apple Silicon + Intel): AU, VST3, Standalone"
+            echo "- Windows: VST3, Standalone"
+            echo
+            echo "Each ZIP contains the plugin, \`LICENSE.txt\` (AGPL-3.0), \`README.txt\` with installation steps and third-party licenses."
+            echo "The ZIPs are attached automatically by the build (about 20 minutes)."
+            echo
+          } > notes.md
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "TapeSaturator ${TAG#v}" \
+            --notes-file notes.md --generate-notes
+
+  build:
+    name: Build + ZIPs anhängen
+    needs: create
+    uses: ./.github/workflows/build.yml
+    with:
+      release_tag: ${{ needs.create.outputs.tag }}
+    permissions:
+      contents: write
