@@ -118,7 +118,8 @@ Every push is also built by **GitHub Actions** (*Actions* tab → latest run →
 - `TapeSaturator-Windows`: VST3, Standalone
 
 Every ZIP contains the plugin together with `LICENSE.txt`, a short `README.txt` (installation and a link to
-the exact source code of that build), `THIRD-PARTY-NOTICES.txt` and the folder `third-party-licenses/`.
+the exact source code of that build), `CHANGELOG.txt`, `THIRD-PARTY-NOTICES.txt` and the folder
+`third-party-licenses/`. What changed in each version: see [`CHANGELOG.md`](CHANGELOG.md).
 
 ### Installing on macOS
 
@@ -137,11 +138,14 @@ Copy `TapeSaturator.vst3` to `C:\Program Files\Common Files\VST3\` and let your 
 
 ## Making a release
 
-1. Raise the version in `CMakeLists.txt` (`project(TapeSaturator VERSION x.y.z ...)`) and merge it into `main`.
-2. On GitHub: **Actions → Release → Run workflow** (branch `main`), optionally with a short "what's new" text.
+1. Raise the version in `CMakeLists.txt` (`project(TapeSaturator VERSION x.y.z ...)`).
+2. Add a section `## [x.y.z] - YYYY-MM-DD` to [`CHANGELOG.md`](CHANGELOG.md) (Added / Changed / Fixed)
+   and merge both into `main`. Builds fail if the current version has no changelog entry.
+3. On GitHub: **Actions → Release → Run workflow** (branch `main`).
 
-The workflow creates the tag `vx.y.z` and the release, then builds macOS and Windows and attaches the ZIPs
-(about 20 minutes). It stops with an error if that version has already been released.
+The workflow takes the release notes from `CHANGELOG.md`, creates the tag `vx.y.z` and the release, then builds
+macOS and Windows and attaches the ZIPs (about 20 minutes). It stops with an error if that version has already
+been released.
 
 ## Building from source
 

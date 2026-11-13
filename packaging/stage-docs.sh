@@ -20,6 +20,9 @@ ref="$3"
 version="$(sed -n 's/^project(TapeSaturator VERSION \([0-9.]*\).*/\1/p' "$root/CMakeLists.txt")"
 [ -n "$version" ] || { echo "could not read version from CMakeLists.txt" >&2; exit 1; }
 
+# Jede gebaute Version braucht einen Changelog-Eintrag (fällt so schon beim Build auf, nicht erst beim Release)
+"$root/packaging/changelog-section.sh" "$version" > /dev/null
+
 mkdir -p "$out/third-party-licenses"
 
 # Project license + readme
@@ -31,6 +34,7 @@ sed -e "s|@VERSION@|$version|g" \
     -e "s|@SOURCE_URL@|https://github.com/notpumbaa/TapeSaturator/tree/$ref|g" \
     "$root/packaging/README.txt.in" > "$out/README.txt"
 cp "$root/packaging/THIRD-PARTY-NOTICES.txt" "$out/THIRD-PARTY-NOTICES.txt"
+cp "$root/CHANGELOG.md" "$out/CHANGELOG.txt"
 
 # Third-party licenses: "<source path relative to JUCE>|<target name>"
 licenses=(

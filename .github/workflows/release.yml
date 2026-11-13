@@ -1,14 +1,10 @@
 name: Release
 
 # Ein-Klick-Release: Actions → Release → Run workflow (auf main).
-# Liest die Version aus CMakeLists.txt, legt Tag + Release an und baut/hängt die ZIPs an.
+# Liest die Version aus CMakeLists.txt, übernimmt deren Abschnitt aus CHANGELOG.md als Release Notes,
+# legt Tag + Release an und baut/hängt die ZIPs an.
 on:
   workflow_dispatch:
-    inputs:
-      notes:
-        description: "Was ist neu? (optional, Markdown; wird über die automatischen Release-Notes gesetzt)"
-        required: false
-        default: ""
 
 permissions:
   contents: write
@@ -44,14 +40,21 @@ jobs:
             exit 1
           fi
 
+      - name: Release Notes aus CHANGELOG.md
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          packaging/changelog-section.sh "${TAG#v}" > changelog-section.md
+          cat changelog-section.md
+
       - name: Release anlegen
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
-          NOTES: ${{ inputs.notes }}
         run: |
           {
-            if [ -n "$NOTES" ]; then printf '%s\n\n' "$NOTES"; fi
+            cat changelog-section.md
+            echo
             echo "## Downloads"
             echo
             echo "- macOS (Universal: Apple Silicon + Intel): AU, VST3, Standalone"
@@ -60,9 +63,10 @@ jobs:
             echo "Each ZIP contains the plugin, \`LICENSE.txt\` (AGPL-3.0), \`README.txt\` with installation steps and third-party licenses."
             echo "The ZIPs are attached automatically by the build (about 20 minutes)."
             echo
+            echo "Full history: [CHANGELOG.md](https://github.com/notpumbaa/TapeSaturator/blob/$TAG/CHANGELOG.md)"
           } > notes.md
           gh release create "$TAG" --target "$GITHUB_SHA" --title "TapeSaturator ${TAG#v}" \
-            --notes-file notes.md --generate-notes
+            --notes-file notes.md
 
   build:
     name: Build + ZIPs anhängen
