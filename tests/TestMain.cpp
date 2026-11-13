@@ -117,6 +117,14 @@ namespace
         return 20.0 * std::log10 (std::sqrt (h) / juce::jmax (1.0e-12, fund) + 1.0e-12);
     }
 
+    /** Pegel (RMS, inkl. durch Wow/Flutter verschmierter Energie) eines Sinustons nach dem Plugin, relativ zum Eingang. */
+    double toneGainDb (double freq, float level, const std::function<void (juce::AudioProcessorValueTreeState&)>& setup)
+    {
+        auto in = makeSine (freq, level, 1.0);
+        auto out = render (in, setup);
+        return rmsDb (out, (int) (0.5 * fs)) - rmsDb (in, (int) (0.5 * fs));
+    }
+
     auto cleanSetup (float saturation)
     {
         return [saturation] (juce::AudioProcessorValueTreeState& s)
@@ -282,6 +290,101 @@ int main (int argc, char* argv[])
         std::cout << "  Input-VU (RMS) bei INPUT 0 dB: " << at0 << " dBFS, bei +12 dB: " << at12 << " dBFS" << std::endl;
         check (std::abs (at0 - (-21.0f)) < 1.0f, "Input-VU zeigt bei INPUT 0 dB den Quellpegel");
         check (std::abs ((at12 - at0) - 12.0f) < 1.0f, "Input-VU steigt um den INPUT-Regler (+12 dB)");
+    }
+
+    // 10) Wow/Flutter kostet keine Höhen (Sinc-Interpolation)
+    {
+        auto withFlutter = [] (float amount)
+        {
+            return [amount] (juce::AudioProcessorValueTreeState& s)
+            {
+                set (s, ParamIDs::flutter, amount);
+                set (s, ParamIDs::noise, 0.0f);
+                set (s, ParamIDs::delayMix, 0.0f);
+            };
+        };
+        const double loss = toneGainDb (16000.0, -30.0f, withFlutter (0.0f)) - toneGainDb (16000.0, -30.0f, withFlutter (1.0f));
+        std::cout << "  Höhenverlust durch Wow/Flutter 100 % bei 16 kHz: " << loss << " dB" << std::endl;
+        check (std::abs (loss) < 0.5, "Wow/Flutter ändert die Höhen um weniger als 0,5 dB");
+    }
+
+    // 11) AIR: erzeugt Obertöne in den Höhen, lässt die Mitten in Ruhe
+    {
+        auto withAir = [] (float amount)
+        {
+            return [amount] (juce::AudioProcessorValueTreeState& s)
+            {
+                cleanSetup (0.3f) (s);
+                set (s, ParamIDs::air, amount);
+            };
+        };
+
+        auto in = makeSine (4000.0, -24.0f, 2.0);
+        const auto off = render (in, withAir (0.0f));
+        const auto on  = render (in, withAir (1.0f));
+        const double h2Gain = 20.0 * std::log10 (toneAmp (on, 8000.0, settle) / juce::jmax (1.0e-12, toneAmp (off, 8000.0, settle)));
+        const double h3Gain = 20.0 * std::log10 (toneAmp (on, 12000.0, settle) / juce::jmax (1.0e-12, toneAmp (off, 12000.0, settle)));
+        const double h2Rel = 20.0 * std::log10 (toneAmp (on, 8000.0, settle) / toneAmp (on, 4000.0, settle));
+        std::cout << "  AIR 100 % bei 4 kHz: 2. Oberton +" << h2Gain << " dB, 3. Oberton +" << h3Gain
+                  << " dB, 2. Oberton relativ zur Grundwelle " << h2Rel << " dB" << std::endl;
+        check (h2Gain > 10.0 && h3Gain > 10.0, "AIR erzeugt deutlich hörbare 2. und 3. Obertöne");
+        check (h2Rel < -12.0, "AIR-Obertöne bleiben dezent (unter -12 dB zur Grundwelle)");
+
+        const double mids = toneGainDb (1000.0, -18.0f, withAir (1.0f)) - toneGainDb (1000.0, -18.0f, withAir (0.0f));
+        std::cout << "  AIR 100 %: Pegeländerung bei 1 kHz " << mids << " dB" << std::endl;
+        check (std::abs (mids) < 0.5, "AIR verändert die Mitten (1 kHz) um weniger als 0,5 dB");
+
+        const auto hot = render (makeSine (6000.0, 0.0f, 1.0), [] (juce::AudioProcessorValueTreeState& s)
+        {
+            set (s, ParamIDs::input, 18.0f);
+            set (s, ParamIDs::air, 1.0f);
+            set (s, ParamIDs::autoGain, 0.0f);
+        });
+        check (allFinite (hot), "AIR bei Vollaussteuerung: keine NaN/Inf");
+    }
+
+    // Optional: Frequenzgang messen (--response)
+    for (int i = 1; i < argc; ++i)
+    {
+        if (juce::String (argv[i]) != "--response")
+            continue;
+
+        struct Setting { const char* name; float speed, flutter, bias, sat, air; };
+        const Setting settings[] = {
+            { "15 ips, Default         ", 1.0f, 0.2f, 0.5f, 0.5f, 0.0f },
+            { "15 ips, Wow/Flutter 0 % ", 1.0f, 0.0f, 0.5f, 0.5f, 0.0f },
+            { "15 ips, Air 50 %        ", 1.0f, 0.2f, 0.5f, 0.5f, 0.5f },
+            { "15 ips, Air 100 %       ", 1.0f, 0.2f, 0.5f, 0.5f, 1.0f },
+            { "7.5 ips, Default        ", 0.0f, 0.2f, 0.5f, 0.5f, 0.0f },
+            { "7.5 ips, Air 100 %      ", 0.0f, 0.2f, 0.5f, 0.5f, 1.0f },
+        };
+        const double freqs[] = { 50, 100, 1000, 5000, 8000, 10000, 12000, 14000, 16000, 18000, 20000 };
+        for (float level : { -30.0f, -12.0f })
+        {
+            std::cout << "  Frequenzgang bei " << level << " dBFS (relativ zu 1 kHz):" << std::endl;
+            for (const auto& st : settings)
+            {
+                std::vector<double> amps;
+                for (double f : freqs)
+                {
+                    amps.push_back (std::pow (10.0, toneGainDb (f, level, [&] (juce::AudioProcessorValueTreeState& s)
+                    {
+                        set (s, ParamIDs::speed, st.speed);
+                        set (s, ParamIDs::flutter, st.flutter);
+                        set (s, ParamIDs::bias, st.bias);
+                        set (s, ParamIDs::saturation, st.sat);
+                        set (s, ParamIDs::air, st.air);
+                        set (s, ParamIDs::noise, 0.0f);
+                        set (s, ParamIDs::delayMix, 0.0f);
+                    }) / 20.0));
+                }
+                const double ref = amps[2];
+                std::cout << "    " << st.name << ":";
+                for (size_t k = 0; k < amps.size(); ++k)
+                    std::cout << "  " << (int) freqs[k] << "Hz " << juce::String (20.0 * std::log10 (amps[k] / ref), 1);
+                std::cout << std::endl;
+            }
+        }
     }
 
     // Optional: Screenshot der Oberfläche (braucht ein Display, z. B. xvfb-run)

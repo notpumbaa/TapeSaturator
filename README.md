@@ -3,7 +3,7 @@ https://notpumbaa.de/plugins/tapesaturator
 
 A standalone tape machine emulation as **VST3 / AU / Standalone** (JUCE 8, CMake).
 Made for buses and the master: tape saturation with real magnetic hysteresis, head bump,
-wow & flutter, tape hiss and slap delay, all inside the look of a classic studio tape machine.
+wow & flutter, tape hiss, slap delay and an AIR control for extra sheen, all inside the look of a classic studio tape machine.
 The UI has animated reels whose tape pack moves from one reel to the other, springy tension arms,
 backlit VU meters behind glass, chicken-head knobs, toggle switches, brushed aluminium and walnut side panels.
 
@@ -16,7 +16,7 @@ backlit VU meters behind glass, chicken-head knobs, toggle switches, brushed alu
 ```
 Input ─► Record EQ ─► [4x oversampling: hysteresis (Jiles-Atherton)] ─► Playback EQ
       ─► Speed EQ (head bump, HF roll-off, bias tilt) ─► Wow & Flutter ─► Slap delay
-      ─► Tape hiss ─► Output / Auto Gain ─► Dry/Wet (latency-compensated)
+      ─► Tape hiss ─► AIR (high-frequency exciter + shelf) ─► Output / Auto Gain ─► Dry/Wet (latency-compensated)
 ```
 
 ## What the plugin does
@@ -30,7 +30,9 @@ and played back:
 3. **Wow & flutter:** Small speed fluctuations of the tape (subtle pitch movement).
 4. **Tape hiss:** Quiet background noise, optional.
 5. **Slap delay:** Tape echo in the style of the '50s and '60s.
-6. **Output and Dry/Wet:** Output level and parallel blend with the original signal.
+6. **AIR:** Brings sheen back to the top end that tape rounds off: subtle 2nd/3rd harmonics from the
+   2.5–7.5 kHz range plus a gentle shelf above about 10 kHz.
+7. **Output and Dry/Wet:** Output level and parallel blend with the original signal.
 
 ## Controls
 
@@ -58,6 +60,7 @@ and played back:
 ### OUTPUT
 | Control | Range | What it does | Tip |
 |---|---|---|---|
+| **AIR** | 0–100 % | Adds subtle 2nd/3rd harmonics in the highs (from the 2.5–7.5 kHz range) plus a gentle shelf (up to about +3 dB at 12–16 kHz). Dynamic: it backs off when there is already a lot of top end (sibilance, cymbals). 0 % = completely off. | Master: 10–30 % for "open" and present without a real level gain. Watch S sounds and cymbals above 50 %. |
 | **OUTPUT** | ±18 dB | Output level. | Use it to level-match for a fair A/B comparison. |
 | **DRY/WET** | 0–100 % | Blend with the unprocessed signal (latency-compensated). | 50–80 % = parallel saturation, transients stay intact. |
 | **AUTO GAIN** | on/off | Automatically compensates the INPUT control at the output. | **Leave it on**, so you hear the actual change in tone rather than just "louder". |
@@ -84,17 +87,18 @@ shows up while dragging or hovering.
 5. **Compare fairly:** Toggle your DAW's bypass and, if needed, use OUTPUT to match loudness.
    Louder always sounds "better" and fools your ears.
 6. **Too much saturation?** Pull DRY/WET down a bit rather than removing the saturation completely.
+7. **Too dark?** Add a little AIR (10–30 %) instead of reaching for an EQ after the plugin.
 
 ## Starting points
 
-| Use case | Input | Saturation | Bias | Speed | Wow/Flutter | Noise | Delay Mix | Dry/Wet |
-|---|---|---|---|---|---|---|---|---|
-| **Master (subtle)** | 0 dB | 30 % | 50 % | 15 ips | 0–5 % | 0 % | 0 % | 100 % |
-| **Mix bus / group** | +3 dB | 50 % | 50 % | 15 ips | 5 % | 0 % | 0 % | 100 % |
-| **Drums (punch)** | +6 dB | 70 % | 40 % | 15 ips | 0 % | 0 % | 0 % | 60 % |
-| **Bass (warmth)** | +3 dB | 60 % | 60 % | 7.5 ips | 0 % | 0 % | 0 % | 100 % |
-| **Vocals (slapback)** | +2 dB | 40 % | 50 % | 15 ips | 10 % | 0 % | 25–40 % (Time 110 ms, Feedback 15 %) | 100 % |
-| **Lo-fi / vintage** | +9 dB | 90 % | 30 % | 7.5 ips | 50–70 % | 40–60 % | to taste | 100 % |
+| Use case | Input | Saturation | Bias | Speed | Wow/Flutter | Noise | Delay Mix | Air | Dry/Wet |
+|---|---|---|---|---|---|---|---|---|---|
+| **Master (subtle)** | 0 dB | 30 % | 50 % | 15 ips | 0–5 % | 0 % | 0 % | 20 % | 100 % |
+| **Mix bus / group** | +3 dB | 50 % | 50 % | 15 ips | 5 % | 0 % | 0 % | 10 % | 100 % |
+| **Drums (punch)** | +6 dB | 70 % | 40 % | 15 ips | 0 % | 0 % | 0 % | 20 % | 60 % |
+| **Bass (warmth)** | +3 dB | 60 % | 60 % | 7.5 ips | 0 % | 0 % | 0 % | 0 % | 100 % |
+| **Vocals (slapback)** | +2 dB | 40 % | 50 % | 15 ips | 10 % | 0 % | 25–40 % (Time 110 ms, Feedback 15 %) | 15 % | 100 % |
+| **Lo-fi / vintage** | +9 dB | 90 % | 30 % | 7.5 ips | 50–70 % | 40–60 % | to taste | 0 % | 100 % |
 
 These are starting points; adjust by ear.
 
@@ -155,11 +159,13 @@ The option `-DTAPESAT_COPY_AFTER_BUILD=ON` copies the plugins into the system pl
 ### Tests and audio examples
 
 `TapeSaturatorTests` checks level stability, distortion behaviour (saturation/bias), stability in the worst case,
-latency-compensated dry/wet and state save/restore. It can also:
+latency-compensated dry/wet, state save/restore, the input VU meter, high-frequency neutrality of
+wow & flutter and the AIR harmonics. It can also:
 
 ```bash
 ./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --render render   # render WAV examples
 ./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --snapshot ui.png  # screenshot of the UI
+./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --response         # frequency response table
 ```
 
 ## Project structure

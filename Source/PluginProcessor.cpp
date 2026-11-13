@@ -19,6 +19,7 @@ TapeSaturatorAudioProcessor::TapeSaturatorAudioProcessor()
     pOutput     = apvts.getRawParameterValue (ParamIDs::output);
     pMix        = apvts.getRawParameterValue (ParamIDs::mix);
     pAutoGain   = apvts.getRawParameterValue (ParamIDs::autoGain);
+    pAir        = apvts.getRawParameterValue (ParamIDs::air);
 }
 
 TapeParams TapeSaturatorAudioProcessor::readParams() const
@@ -36,6 +37,7 @@ TapeParams TapeSaturatorAudioProcessor::readParams() const
     p.outputDb      = pOutput->load();
     p.mix           = pMix->load();
     p.autoGain      = pAutoGain->load() > 0.5f;
+    p.air           = pAir->load();
     return p;
 }
 

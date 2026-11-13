@@ -14,7 +14,7 @@ namespace
     constexpr int knobSize      = 80;
     constexpr int reelSize      = 268;
 
-    constexpr std::array<int, 4> sectionColumns { 4, 2, 3, 3 };
+    constexpr std::array<int, 4> sectionColumns { 4, 2, 3, 4 };
 
     constexpr float packMin = 0.36f;    // leere Spule (Nabe)
     constexpr float packMax = 0.93f;    // volle Spule
@@ -80,6 +80,7 @@ TapeMachine::TapeMachine (juce::AudioProcessorValueTreeState& s) : state (s)
     addKnob (delayTime,  ParamIDs::delayTime,  "TIME");
     addKnob (delayFb,    ParamIDs::delayFb,    "FEEDBACK");
     addKnob (delayMix,   ParamIDs::delayMix,   "MIX");
+    addKnob (air,        ParamIDs::air,        "AIR");
     addKnob (output,     ParamIDs::output,     "OUTPUT");
     addKnob (mix,        ParamIDs::mix,        "DRY / WET");
     addSwitch (autoGainSwitch, ParamIDs::autoGain, "AUTO GAIN", "ON|OFF");
@@ -232,11 +233,11 @@ void TapeMachine::resized()
     area.removeFromTop (30);
     area.removeFromBottom (24);
 
-    std::array<juce::Component*, 12> controls {
+    std::array<juce::Component*, 13> controls {
         &input.slider, &saturation.slider, &bias.slider, &speedSwitch.button,
         &flutter.slider, &noise.slider,
         &delayTime.slider, &delayFb.slider, &delayMix.slider,
-        &output.slider, &mix.slider, &autoGainSwitch.button
+        &air.slider, &output.slider, &mix.slider, &autoGainSwitch.button
     };
 
     int sectionsW = 3 * sectionGap;

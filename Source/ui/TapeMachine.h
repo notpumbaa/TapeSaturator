@@ -13,7 +13,7 @@
 class TapeMachine : public juce::Component
 {
 public:
-    static constexpr int kBaseWidth  = 1180;
+    static constexpr int kBaseWidth  = 1260;
     static constexpr int kBaseHeight = 520;
 
     explicit TapeMachine (juce::AudioProcessorValueTreeState&);
@@ -71,7 +71,7 @@ private:
     juce::AudioProcessorValueTreeState& state;
     TapeLookAndFeel lnf;
 
-    Knob input, saturation, bias, flutter, noise, delayTime, delayFb, delayMix, output, mix;
+    Knob input, saturation, bias, flutter, noise, delayTime, delayFb, delayMix, air, output, mix;
     Switch speedSwitch, autoGainSwitch;
 
     TapeReel leftReel { 0.8f }, rightReel { 0.5f };

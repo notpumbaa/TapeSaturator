@@ -2,6 +2,8 @@
 
 #include <juce_dsp/juce_dsp.h>
 #include "Hysteresis.h"
+#include "SincDelay.h"
+#include "AirExciter.h"
 
 struct TapeParams
 {
@@ -16,6 +18,7 @@ struct TapeParams
     float delayMix      = 0.0f;   // 0..1
     float outputDb      = 0.0f;   // -18..+18
     float mix           = 1.0f;   // 0..1
+    float air           = 0.0f;   // 0..1
     bool  autoGain      = true;
 };
 
@@ -77,7 +80,7 @@ private:
     StereoIIR preEmphasis, deEmphasis, lowCut, headBump, bumpDip, hfRolloff, biasTilt;
 
     // Wow & Flutter
-    juce::dsp::DelayLine<float, juce::dsp::DelayLineInterpolationTypes::Lagrange3rd> motionDelay { 1 << 12 };
+    SincDelay motionDelay;   // Sinc-Interpolation: Wow/Flutter ändert nur die Tonhöhe, nicht die Höhen
     double wowPhase = 0.0, flutterPhase = 0.0, flutter2Phase = 0.0;
     float driftState = 0.0f, driftTarget = 0.0f;
     int driftCounter = 0;
@@ -94,6 +97,9 @@ private:
     juce::Random random;
     std::vector<float> noiseLp;
     juce::SmoothedValue<float> noiseGain;
+
+    // Air (Obertöne + Glanz in den Höhen, am Ende der Kette)
+    AirExciter airExciter;
 
     // Gain / Mix
     juce::SmoothedValue<float> inputGain, outputGain;

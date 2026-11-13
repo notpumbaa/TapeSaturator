@@ -69,6 +69,7 @@ private:
     std::atomic<float>* pOutput     = nullptr;
     std::atomic<float>* pMix        = nullptr;
     std::atomic<float>* pAutoGain   = nullptr;
+    std::atomic<float>* pAir        = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TapeSaturatorAudioProcessor)
 };

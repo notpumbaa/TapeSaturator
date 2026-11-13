@@ -53,8 +53,8 @@ void TapeEngine::prepare (double newSampleRate, int maxBlockSize, int newNumChan
 
     // Wow & Flutter
     motionBaseDelay = (float) (motionBaseSec * sampleRate);
-    motionDelay.setMaximumDelayInSamples ((int) std::ceil (sampleRate * 0.01) + 8);
-    motionDelay.prepare (spec);
+    motionDelay.prepare (numChannels, (int) std::ceil (sampleRate * 0.01) + 8);
+    airExciter.prepare (sampleRate, numChannels);
 
     // Slap-Delay
     echoDelay.setMaximumDelayInSamples ((int) std::ceil (sampleRate * 0.85) + 8);
@@ -102,6 +102,7 @@ void TapeEngine::reset()
         f->reset();
 
     motionDelay.reset();
+    airExciter.reset();
     echoDelay.reset();
     std::fill (echoLp.begin(), echoLp.end(), 0.0f);
     std::fill (echoHp.begin(), echoHp.end(), 0.0f);
@@ -147,6 +148,7 @@ void TapeEngine::setParameters (const TapeParams& p)
     noiseGain.setTargetValue (p.noise <= 0.0f ? 0.0f : juce::Decibels::decibelsToGain (noiseDb));
 
     dryWet.setWetMixProportion (p.mix);
+    airExciter.setAmount (p.air);
 
     if (p.speed != lastSpeed || std::abs (p.bias - lastBias) > 1.0e-3f)
         updateFilters();
@@ -254,6 +256,7 @@ void TapeEngine::processChunk (juce::AudioBuffer<float>& buffer)
     processTapeMotion (block);
     processDelay (block);
     addNoise (block);
+    airExciter.process (block);
 
     // Output
     for (int n = 0; n < numSamples; ++n)
@@ -302,13 +305,13 @@ void TapeEngine::processTapeMotion (juce::dsp::AudioBlock<float>& block)
         flutterPhase  += flutInc;  if (flutterPhase >= 1.0)  flutterPhase -= 1.0;
         flutter2Phase += flut2Inc; if (flutter2Phase >= 1.0) flutter2Phase -= 1.0;
 
-        const float delay = juce::jmax (1.0f, motionBaseDelay + (float) mod);
+        const float delay = juce::jmax ((float) SincDelay::kHalfTaps, motionBaseDelay + (float) mod);
 
         for (int ch = 0; ch < chans; ++ch)
         {
             auto* d = block.getChannelPointer ((size_t) ch);
-            motionDelay.pushSample (ch, d[n]);
-            d[n] = motionDelay.popSample (ch, delay);
+            motionDelay.push (ch, d[n]);
+            d[n] = motionDelay.read (ch, delay);
         }
     }
 }

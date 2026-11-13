@@ -16,6 +16,7 @@ namespace ParamIDs
     inline constexpr const char* output      = "output";
     inline constexpr const char* mix         = "mix";
     inline constexpr const char* autoGain    = "autoGain";
+    inline constexpr const char* air         = "air";
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

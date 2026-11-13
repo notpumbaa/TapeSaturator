@@ -55,6 +55,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     layout.add (percentParam (ParamIDs::delayMix, "Delay Mix", 0.0f));
 
     // Output
+    layout.add (percentParam (ParamIDs::air, "Air", 0.0f));
     layout.add (gainParam (ParamIDs::output, "Output"));
     layout.add (percentParam (ParamIDs::mix, "Dry/Wet", 1.0f));
     layout.add (std::make_unique<APB> (juce::ParameterID { ParamIDs::autoGain, 1 }, "Auto Gain", true));
