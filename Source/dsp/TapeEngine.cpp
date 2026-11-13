@@ -185,35 +185,46 @@ void TapeEngine::updateFilters()
 void TapeEngine::process (juce::AudioBuffer<float>& buffer)
 {
     jassert (prepared);
+    tapeInputSumSq = 0.0;
+    tapeInputCount = 0;
+
     const int numSamples = buffer.getNumSamples();
-    if (numSamples == 0)
-        return;
 
     // Nicht mehr als die vorbereitete Blockgröße auf einmal verarbeiten
-    if (numSamples > maxBlock)
+    for (int start = 0; start < numSamples; start += maxBlock)
     {
-        for (int start = 0; start < numSamples; start += maxBlock)
-        {
-            const int len = juce::jmin (maxBlock, numSamples - start);
-            juce::AudioBuffer<float> sub (buffer.getArrayOfWritePointers(), buffer.getNumChannels(), start, len);
-            process (sub);
-        }
-        return;
+        const int len = juce::jmin (maxBlock, numSamples - start);
+        juce::AudioBuffer<float> chunk (buffer.getArrayOfWritePointers(), buffer.getNumChannels(), start, len);
+        processChunk (chunk);
     }
+}
 
+float TapeEngine::getTapeInputMeanSquare() const noexcept
+{
+    return tapeInputCount > 0 ? (float) (tapeInputSumSq / (double) tapeInputCount) : 0.0f;
+}
+
+void TapeEngine::processChunk (juce::AudioBuffer<float>& buffer)
+{
+    const int numSamples = buffer.getNumSamples();
     const int chans = juce::jmin (buffer.getNumChannels(), numChannels);
     juce::dsp::AudioBlock<float> block (buffer.getArrayOfWritePointers(), (size_t) chans, (size_t) numSamples);
     juce::dsp::ProcessContextReplacing<float> ctx (block);
 
     dryWet.pushDrySamples (block);
 
-    // Input
+    // Input (+ Pegel "aufs Band" für das Input-VU-Meter)
     for (int n = 0; n < numSamples; ++n)
     {
         const float g = inputGain.getNextValue();
         for (int ch = 0; ch < chans; ++ch)
-            block.getChannelPointer ((size_t) ch)[n] *= g;
+        {
+            auto& x = block.getChannelPointer ((size_t) ch)[n];
+            x *= g;
+            tapeInputSumSq += (double) x * (double) x;
+        }
     }
+    tapeInputCount += numSamples * chans;
 
     // Record-EQ -> Hysterese (oversampled) -> Playback-EQ
     preEmphasis.process (ctx);

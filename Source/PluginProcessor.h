@@ -39,7 +39,8 @@ public:
     /** Aktuelle Parameter als DSP-Struktur (auch für Tests nützlich). */
     TapeParams readParams() const;
 
-    /** Geglätteter RMS-Pegel (linear) für die VU-Meter. */
+    /** Geglätteter RMS-Pegel (linear) für die VU-Meter.
+        Input = Pegel nach dem INPUT-Regler (was aufs Band geht), Output = Plugin-Ausgang. */
     float getInputLevel() const noexcept  { return std::sqrt (inputMeanSq.load()); }
     float getOutputLevel() const noexcept { return std::sqrt (outputMeanSq.load()); }
 
@@ -49,7 +50,8 @@ public:
 private:
     TapeEngine engine;
 
-    void updateMeter (std::atomic<float>& meanSq, const juce::AudioBuffer<float>& buffer);
+    static float meanSquare (const juce::AudioBuffer<float>& buffer);
+    void smoothMeter (std::atomic<float>& meanSq, float blockMeanSq, int numSamples);
 
     std::atomic<float> inputMeanSq { 0.0f }, outputMeanSq { 0.0f };
     std::atomic<juce::uint32> blockCounter { 0 };

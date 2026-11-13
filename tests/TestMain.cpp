@@ -259,6 +259,31 @@ int main (int argc, char* argv[])
                "State-Speichern/Laden erhält Parameter");
     }
 
+    // 9) Input-VU-Meter folgt dem INPUT-Regler (Pegel nach dem Gain = was aufs Band geht)
+    {
+        auto meterAfter = [] (float inputDb)
+        {
+            TapeSaturatorAudioProcessor proc;
+            set (proc.apvts, ParamIDs::input, inputDb);
+            proc.setPlayConfigDetails (2, 2, fs, blockSize);
+            proc.prepareToPlay (fs, blockSize);
+            auto buf = makeSine (1000.0, -18.0f, 1.0);
+            juce::MidiBuffer midi;
+            for (int start = 0; start < buf.getNumSamples(); start += blockSize)
+            {
+                juce::AudioBuffer<float> sub (buf.getArrayOfWritePointers(), 2, start,
+                                              juce::jmin (blockSize, buf.getNumSamples() - start));
+                proc.processBlock (sub, midi);
+            }
+            return juce::Decibels::gainToDecibels (proc.getInputLevel());
+        };
+        const float at0  = meterAfter (0.0f);
+        const float at12 = meterAfter (12.0f);
+        std::cout << "  Input-VU (RMS) bei INPUT 0 dB: " << at0 << " dBFS, bei +12 dB: " << at12 << " dBFS" << std::endl;
+        check (std::abs (at0 - (-21.0f)) < 1.0f, "Input-VU zeigt bei INPUT 0 dB den Quellpegel");
+        check (std::abs ((at12 - at0) - 12.0f) < 1.0f, "Input-VU steigt um den INPUT-Regler (+12 dB)");
+    }
+
     // Optional: Screenshot der Oberfläche (braucht ein Display, z. B. xvfb-run)
     for (int i = 1; i + 1 < argc; ++i)
     {

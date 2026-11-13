@@ -39,11 +39,16 @@ public:
     /** Gesamtlatenz in Samples (Oversampling-Filter + Wow/Flutter-Grundverzögerung). */
     int getLatencySamples() const noexcept { return latencySamples; }
 
+    /** Mittlere Leistung des letzten process()-Aufrufs direkt nach dem Input-Gain,
+        also der Pegel, der "aufs Band" geht (für das Input-VU-Meter). */
+    float getTapeInputMeanSquare() const noexcept;
+
 private:
     using Filter     = juce::dsp::IIR::Filter<float>;
     using Coeffs     = juce::dsp::IIR::Coefficients<float>;
     using StereoIIR  = juce::dsp::ProcessorDuplicator<Filter, Coeffs>;
 
+    void processChunk (juce::AudioBuffer<float>& buffer);
     void updateFilters();
     void processTapeMotion (juce::dsp::AudioBlock<float>& block);
     void processDelay (juce::dsp::AudioBlock<float>& block);
@@ -55,6 +60,8 @@ private:
     int numChannels = 2;
     int maxBlock = 512;
     int latencySamples = 0;
+    double tapeInputSumSq = 0.0;
+    int tapeInputCount = 0;
     bool prepared = false;
 
     TapeParams params;

@@ -67,6 +67,9 @@ shows up while dragging or hovering.
 
 ## The VU meters
 
+- **Left meter (INPUT):** the level that hits the tape, i.e. *after* the INPUT control. Turning INPUT moves this needle.
+- **Right meter (OUTPUT):** the plugin's output level. With **Auto Gain** on it stays roughly the same when you turn
+  INPUT. That's intended: you hear (and see) the change in tone, not just a change in volume.
 - **0 VU equals -18 dBFS** (average level, not peak level).
 - The needle is intentionally slow, like a real VU meter, and shows perceived loudness.
 - **Input around 0 VU:** clean operating point with a touch of colour.

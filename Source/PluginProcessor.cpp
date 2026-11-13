@@ -65,19 +65,21 @@ void TapeSaturatorAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     for (int ch = getTotalNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
         buffer.clear (ch, 0, buffer.getNumSamples());
 
-    updateMeter (inputMeanSq, buffer);
     engine.setParameters (readParams());
     engine.process (buffer);
-    updateMeter (outputMeanSq, buffer);
+
+    // Input-VU: Pegel nach dem INPUT-Regler (was aufs Band geht), Output-VU: Plugin-Ausgang
+    smoothMeter (inputMeanSq, engine.getTapeInputMeanSquare(), buffer.getNumSamples());
+    smoothMeter (outputMeanSq, meanSquare (buffer), buffer.getNumSamples());
     blockCounter.fetch_add (1, std::memory_order_relaxed);
 }
 
-void TapeSaturatorAudioProcessor::updateMeter (std::atomic<float>& meanSq, const juce::AudioBuffer<float>& buffer)
+float TapeSaturatorAudioProcessor::meanSquare (const juce::AudioBuffer<float>& buffer)
 {
     const int n = buffer.getNumSamples();
     const int chans = buffer.getNumChannels();
     if (n == 0 || chans == 0)
-        return;
+        return 0.0f;
 
     double sum = 0.0;
     for (int ch = 0; ch < chans; ++ch)
@@ -86,7 +88,13 @@ void TapeSaturatorAudioProcessor::updateMeter (std::atomic<float>& meanSq, const
         for (int i = 0; i < n; ++i)
             sum += (double) d[i] * d[i];
     }
-    const float blockMeanSq = (float) (sum / (double) (n * chans));
+    return (float) (sum / (double) (n * chans));
+}
+
+void TapeSaturatorAudioProcessor::smoothMeter (std::atomic<float>& meanSq, float blockMeanSq, int n)
+{
+    if (n <= 0)
+        return;
 
     // Glättung mit ~50 ms Zeitkonstante, unabhängig von der Blockgröße
     const float coef = 1.0f - std::exp (-(float) n / (float) (0.05 * currentSampleRate));
