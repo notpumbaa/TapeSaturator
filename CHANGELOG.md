@@ -9,6 +9,18 @@ The section of a version is used as its release notes on GitHub automatically.
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-14
+
+### Fixed
+- **Auto Gain now really matches levels.** Before, it only subtracted the INPUT setting at the output: at
+  INPUT 0 dB it did nothing at all, and with heavy saturation the output ended up quieter than the input
+  (up to −6 dB on music, −10 dB on noise). Now the output stays within about ±0.5 dB of the input level,
+  whatever INPUT, SATURATION, BIAS, SPEED or AIR do. INPUT changes are still compensated instantly; the rest
+  is matched smoothly over about a second, without pumping, and frozen in pauses so tape hiss is not pulled up.
+
+### Added
+- Test option `--autogain` that prints a level-match table for Auto Gain on and off.
+
 ## [1.2.0] - 2026-11-13
 
 ### Added
@@ -62,7 +74,8 @@ The section of a version is used as its release notes on GitHub automatically.
 - Auto Gain and latency-compensated Dry/Wet.
 - Vintage tape machine interface with animated reels and VU meters.
 
-[Unreleased]: https://github.com/notpumbaa/TapeSaturator/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/notpumbaa/TapeSaturator/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/notpumbaa/TapeSaturator/releases/tag/v1.2.1
 [1.2.0]: https://github.com/notpumbaa/TapeSaturator/releases/tag/v1.2.0
 [1.1.1]: https://github.com/notpumbaa/TapeSaturator/releases/tag/v1.1.1
 [1.1.0]: https://github.com/notpumbaa/TapeSaturator/releases/tag/v1.1.0

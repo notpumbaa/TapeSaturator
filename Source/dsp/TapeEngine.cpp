@@ -69,6 +69,7 @@ void TapeEngine::prepare (double newSampleRate, int maxBlockSize, int newNumChan
     // Glättung
     inputGain.reset (sampleRate, 0.02);
     outputGain.reset (sampleRate, 0.02);
+    autoTrim.reset (sampleRate, 0.05);
     makeupGain.reset (sampleRate, 0.05);
     flutterAmount.reset (sampleRate, 0.1);
     echoTimeSamples.reset (sampleRate, 0.25); // langsame Zeitänderung = Tape-artiger Pitch-Glide
@@ -111,6 +112,9 @@ void TapeEngine::reset()
     driftState = driftTarget = 0.0f;
     driftCounter = 0;
     dryWet.reset();
+
+    agDryPower = agWetPower = 0.0;
+    autoTrim.setCurrentAndTargetValue (1.0f);
 
     for (auto* s : { &inputGain, &outputGain, &makeupGain, &flutterAmount,
                      &echoTimeSamples, &echoFeedback, &echoMix, &noiseGain })
@@ -215,13 +219,15 @@ void TapeEngine::processChunk (juce::AudioBuffer<float>& buffer)
 
     dryWet.pushDrySamples (block);
 
-    // Input (+ Pegel "aufs Band" für das Input-VU-Meter)
+    // Input (+ Pegel "aufs Band" für das Input-VU-Meter, + Eingangspegel für Auto Gain)
+    double drySumSq = 0.0;
     for (int n = 0; n < numSamples; ++n)
     {
         const float g = inputGain.getNextValue();
         for (int ch = 0; ch < chans; ++ch)
         {
             auto& x = block.getChannelPointer ((size_t) ch)[n];
+            drySumSq += (double) x * (double) x;
             x *= g;
             tapeInputSumSq += (double) x * (double) x;
         }
@@ -258,15 +264,58 @@ void TapeEngine::processChunk (juce::AudioBuffer<float>& buffer)
     addNoise (block);
     airExciter.process (block);
 
+    // Auto Gain: Restabweichung zwischen Ein- und Ausgangspegel langsam ausgleichen
+    double wetSumSq = 0.0;
+    for (int ch = 0; ch < chans; ++ch)
+    {
+        const float* d = block.getChannelPointer ((size_t) ch);
+        for (int n = 0; n < numSamples; ++n)
+            wetSumSq += (double) d[n] * (double) d[n];
+    }
+    const double count = (double) juce::jmax (1, numSamples * chans);
+    updateAutoGain (drySumSq / count, wetSumSq / count, numSamples);
+
     // Output
     for (int n = 0; n < numSamples; ++n)
     {
-        const float g = outputGain.getNextValue();
+        const float g = outputGain.getNextValue() * autoTrim.getNextValue();
         for (int ch = 0; ch < chans; ++ch)
             block.getChannelPointer ((size_t) ch)[n] *= g;
     }
 
     dryWet.mixWetSamples (block);
+}
+
+void TapeEngine::updateAutoGain (double dryMeanSq, double wetMeanSq, int numSamples)
+{
+    // Pegel über ~0.8 s mitteln; bei Stille einfrieren (sonst würde z. B. Bandrauschen hochgezogen)
+    constexpr double silence = 1.0e-7; // ca. -70 dBFS
+    if (dryMeanSq > silence)
+    {
+        if (agDryPower <= 0.0)
+        {
+            agDryPower = dryMeanSq;
+            agWetPower = wetMeanSq;
+        }
+        else
+        {
+            const double a = 1.0 - std::exp (-(double) numSamples / (autoGainSeconds * sampleRate));
+            agDryPower += a * (dryMeanSq - agDryPower);
+            agWetPower += a * (wetMeanSq - agWetPower);
+        }
+    }
+
+    float target = 1.0f;
+    if (params.autoGain && agDryPower > silence && agWetPower > 1.0e-12)
+    {
+        // Der INPUT-Regler wird bereits sofort über outputGain ausgeglichen – hier nur der Rest
+        // (Sättigung/Kompression, Bias, Speed-EQ, AIR, Delay ...)
+        const double staticComp = juce::Decibels::decibelsToGain ((double) -params.inputDb);
+        const double residual = std::sqrt (agDryPower / (agWetPower * staticComp * staticComp));
+        target = (float) juce::jlimit (juce::Decibels::decibelsToGain (-autoGainRangeDb),
+                                       juce::Decibels::decibelsToGain (autoGainRangeDb), residual);
+    }
+    autoTrim.setTargetValue (target);
 }
 
 void TapeEngine::processTapeMotion (juce::dsp::AudioBlock<float>& block)

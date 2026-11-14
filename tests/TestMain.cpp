@@ -343,6 +343,144 @@ int main (int argc, char* argv[])
         check (allFinite (hot), "AIR bei Vollaussteuerung: keine NaN/Inf");
     }
 
+    // 12) Auto Gain: Ausgang auf Eingangspegel, auch bei starker Sättigung; Stille wird nicht hochgezogen
+    {
+        juce::AudioBuffer<float> sig (2, (int) (4.0 * fs));
+        juce::Random rng (7);
+        for (int k = 0; k < sig.getNumSamples(); ++k)
+        {
+            const double t = k / fs;
+            const float v = (float) (0.12 * std::exp (-3.0 * std::fmod (t, 0.5))
+                                     * (std::sin (juce::MathConstants<double>::twoPi * 110.0 * t)
+                                        + std::sin (juce::MathConstants<double>::twoPi * 440.0 * t)))
+                            + (rng.nextFloat() - 0.5f) * 0.05f;
+            sig.setSample (0, k, v);
+            sig.setSample (1, k, v);
+        }
+
+        const int from = (int) (2.0 * fs);
+        for (auto [inDb, sat] : { std::pair<float, float> { 0.0f, 1.0f }, { 18.0f, 1.0f }, { 9.0f, 0.5f } })
+        {
+            auto out = render (sig, [inDb, sat] (juce::AudioProcessorValueTreeState& s)
+            {
+                set (s, ParamIDs::input, inDb);
+                set (s, ParamIDs::saturation, sat);
+                set (s, ParamIDs::air, 1.0f);
+                set (s, ParamIDs::autoGain, 1.0f);
+            });
+            const float diff = rmsDb (out, from) - rmsDb (sig, from);
+            std::cout << "  Auto Gain (INPUT +" << inDb << " dB, Sat " << (int) (sat * 100) << " %, AIR 100 %): Abweichung "
+                      << diff << " dB" << std::endl;
+            check (std::abs (diff) < 1.0f, "Auto Gain gleicht den Pegel auf +/-1 dB an (INPUT +" + std::to_string ((int) inDb) + " dB)");
+        }
+
+        // Signal, dann Stille mit Bandrauschen: Rauschen darf nicht hochgeregelt werden
+        juce::AudioBuffer<float> withGap (sig);
+        withGap.clear ((int) (2.0 * fs), withGap.getNumSamples() - (int) (2.0 * fs)); // beide Kanäle
+        auto hissLevel = [&] (float ag)
+        {
+            auto out = render (withGap, [ag] (juce::AudioProcessorValueTreeState& s)
+            {
+                set (s, ParamIDs::input, 12.0f);
+                set (s, ParamIDs::noise, 1.0f);
+                set (s, ParamIDs::autoGain, ag);
+            });
+            return rmsDb (out, (int) (3.0 * fs));
+        };
+        const float hissOff = hissLevel (0.0f), hissOn = hissLevel (1.0f);
+        std::cout << "  Rauschen in Stille: Auto Gain AUS " << hissOff << " dBFS, AN " << hissOn << " dBFS" << std::endl;
+        check (hissOn < hissOff + 1.0f && hissOn < -40.0f, "Auto Gain zieht Bandrauschen in Pausen nicht hoch");
+    }
+
+    // Optional: Auto-Gain-Verhalten messen (--autogain)
+    for (int i = 1; i < argc; ++i)
+    {
+        if (juce::String (argv[i]) != "--autogain")
+            continue;
+
+        // Testsignale: Sinus, "Musik" (Akkord mit Hüllkurve + Bass), Rauschen – alle ca. -18 dBFS RMS
+        auto music = [] (double seconds)
+        {
+            const int n = (int) (seconds * fs);
+            juce::AudioBuffer<float> b (2, n);
+            for (int s = 0; s < n; ++s)
+            {
+                const double t = s / fs;
+                const double env = std::exp (-3.0 * std::fmod (t, 0.5));
+                double v = 0.0;
+                for (double f : { 55.0, 110.0, 220.0, 277.2, 329.6, 440.0, 1760.0, 3520.0 })
+                    v += std::sin (juce::MathConstants<double>::twoPi * f * t);
+                b.setSample (0, s, (float) (0.09 * env * v));
+                b.setSample (1, s, (float) (0.09 * env * v));
+            }
+            return b;
+        };
+        auto noise = [] (double seconds)
+        {
+            juce::Random r (3);
+            const int n = (int) (seconds * fs);
+            juce::AudioBuffer<float> b (2, n);
+            for (int s = 0; s < n; ++s) { const float v = (r.nextFloat() * 2.0f - 1.0f) * 0.218f; b.setSample (0, s, v); b.setSample (1, s, v); }
+            return b;
+        };
+        struct Sig { const char* name; juce::AudioBuffer<float> buf; };
+        std::vector<Sig> sigs;
+        sigs.push_back ({ "Sinus 1k", makeSine (1000.0, -15.0f, 3.0) });
+        sigs.push_back ({ "Musik   ", music (3.0) });
+        sigs.push_back ({ "Rauschen", noise (3.0) });
+
+        for (auto& sg : sigs)
+        {
+            std::cout << "  " << sg.name << " (Eingang " << juce::String (rmsDb (sg.buf, 0), 1) << " dBFS RMS):" << std::endl;
+            for (float sat : { 0.5f, 1.0f })
+                for (float inDb : { 0.0f, 6.0f, 12.0f, 18.0f })
+                {
+                    double res[2];
+                    for (int ag = 0; ag < 2; ++ag)
+                    {
+                        auto out = render (sg.buf, [&] (juce::AudioProcessorValueTreeState& s)
+                        {
+                            set (s, ParamIDs::input, inDb);
+                            set (s, ParamIDs::saturation, sat);
+                            set (s, ParamIDs::autoGain, (float) ag);
+                            set (s, ParamIDs::flutter, 0.0f);
+                        });
+                        const int from = (int) (1.5 * fs); // Auto Gain eingeschwungen
+                        res[ag] = rmsDb (out, from) - rmsDb (sg.buf, from);
+                    }
+                    if (sat > 0.9f && inDb > 17.0f)
+                    {
+                        // Pumpen: Schwankung des Pegelverhältnisses Aus/Ein über 50-ms-Fenster
+                        auto wobble = [&] (int ag)
+                        {
+                            auto out = render (sg.buf, [&] (juce::AudioProcessorValueTreeState& s)
+                            {
+                                set (s, ParamIDs::input, inDb);
+                                set (s, ParamIDs::saturation, sat);
+                                set (s, ParamIDs::autoGain, (float) ag);
+                                set (s, ParamIDs::flutter, 0.0f);
+                            });
+                            const int w = (int) (0.05 * fs);
+                            std::vector<double> r;
+                            for (int st = (int) (1.5 * fs); st + w <= out.getNumSamples(); st += w)
+                            {
+                                double a = 0, b = 0;
+                                for (int k = st; k < st + w; ++k) { a += out.getSample (0, k) * out.getSample (0, k); b += sg.buf.getSample (0, k) * sg.buf.getSample (0, k); }
+                                if (b > 1.0e-9) r.push_back (10.0 * std::log10 (a / b));
+                            }
+                            double m = 0; for (double v : r) m += v; m /= (double) r.size();
+                            double var = 0; for (double v : r) var += (v - m) * (v - m);
+                            return std::sqrt (var / (double) r.size());
+                        };
+                        std::cout << "    Pumpen (Streuung Aus/Ein-Verhältnis, 50 ms): Auto Gain AUS "
+                                  << juce::String (wobble (0), 2) << " dB | AN " << juce::String (wobble (1), 2) << " dB" << std::endl;
+                    }
+                    std::cout << "    Sat " << (int) (sat * 100) << " %, INPUT +" << (int) inDb << " dB:  Auto Gain AUS "
+                              << juce::String (res[0], 1) << " dB | AN " << juce::String (res[1], 1) << " dB" << std::endl;
+                }
+        }
+    }
+
     // Optional: Frequenzgang messen (--response)
     for (int i = 1; i < argc; ++i)
     {

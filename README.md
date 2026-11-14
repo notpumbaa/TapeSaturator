@@ -63,7 +63,7 @@ and played back:
 | **AIR** | 0–100 % | Adds subtle 2nd/3rd harmonics in the highs (from the 2.5–7.5 kHz range) plus a gentle shelf (up to about +3 dB at 12–16 kHz). Dynamic: it backs off when there is already a lot of top end (sibilance, cymbals). 0 % = completely off. | Master: 10–30 % for "open" and present without a real level gain. Watch S sounds and cymbals above 50 %. |
 | **OUTPUT** | ±18 dB | Output level. | Use it to level-match for a fair A/B comparison. |
 | **DRY/WET** | 0–100 % | Blend with the unprocessed signal (latency-compensated). | 50–80 % = parallel saturation, transients stay intact. |
-| **AUTO GAIN** | on/off | Automatically compensates the INPUT control at the output. | **Leave it on**, so you hear the actual change in tone rather than just "louder". |
+| **AUTO GAIN** | on/off | Level match: keeps the output at the same average level as the input, whatever INPUT, SATURATION, BIAS, SPEED or AIR do. Turning INPUT is compensated instantly, the rest is matched smoothly over about a second (no pumping; frozen in pauses so hiss is not pulled up). OUTPUT still works on top. | **Leave it on**, so you hear the actual change in tone rather than just "louder". Toggle it off/on for a quick level-matched A/B. |
 
 **Handling:** drag a knob to change its value, **double-click to reset it to the default**. The exact value
 shows up while dragging or hovering.
@@ -164,12 +164,13 @@ The option `-DTAPESAT_COPY_AFTER_BUILD=ON` copies the plugins into the system pl
 
 `TapeSaturatorTests` checks level stability, distortion behaviour (saturation/bias), stability in the worst case,
 latency-compensated dry/wet, state save/restore, the input VU meter, high-frequency neutrality of
-wow & flutter and the AIR harmonics. It can also:
+wow & flutter, the AIR harmonics and Auto Gain level matching. It can also:
 
 ```bash
 ./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --render render   # render WAV examples
 ./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --snapshot ui.png  # screenshot of the UI
 ./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --response         # frequency response table
+./build/TapeSaturatorTests_artefacts/Release/TapeSaturatorTests --autogain         # Auto Gain level-match table
 ```
 
 ## Project structure

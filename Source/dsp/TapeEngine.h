@@ -52,6 +52,7 @@ private:
     using StereoIIR  = juce::dsp::ProcessorDuplicator<Filter, Coeffs>;
 
     void processChunk (juce::AudioBuffer<float>& buffer);
+    void updateAutoGain (double dryMeanSq, double wetMeanSq, int numSamples);
     void updateFilters();
     void processTapeMotion (juce::dsp::AudioBlock<float>& block);
     void processDelay (juce::dsp::AudioBlock<float>& block);
@@ -100,6 +101,12 @@ private:
 
     // Air (Obertöne + Glanz in den Höhen, am Ende der Kette)
     AirExciter airExciter;
+
+    // Auto Gain: sofortiger INPUT-Ausgleich (in outputGain) + langsamer Pegelabgleich des Rests
+    static constexpr double autoGainSeconds = 0.8;
+    static constexpr double autoGainRangeDb = 12.0;
+    double agDryPower = 0.0, agWetPower = 0.0;
+    juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> autoTrim { 1.0f };
 
     // Gain / Mix
     juce::SmoothedValue<float> inputGain, outputGain;
